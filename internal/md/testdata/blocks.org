@@ -1,0 +1,22 @@
+* Blocks
+Prose before the block.
+
+#+BEGIN_SRC sh
+echo *not bold* and =not code=
+* not a heading
+- not a list item
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+literal text with /slashes/ and _underscores_
+#+END_EXAMPLE
+
+#+BEGIN_QUOTE
+A *quoted* paragraph.
+
+- with a list inside
+#+END_QUOTE
+
+-----
+
+Prose after the rule.
