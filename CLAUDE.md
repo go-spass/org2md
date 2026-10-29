@@ -11,8 +11,12 @@ the generated Markdown into `$MDNOTES_DIR/Inbox`.
 ## Repository state
 
 Scaffolded, conversion not yet written. `cmd/org2md` holds the Cobra root command and
-builds; `RunE` returns `errNotImplemented` until step 2 of the plan wires the converter in.
-`internal/org`, `internal/md`, and `internal/vault` do not exist yet.
+builds, but `RunE` returns `errNotImplemented`: the CLI is wired to the converter in step 9
+of the plan, along with the output-placement flags. `internal/org` parses headings and
+paragraphs, `internal/md` renders them, and `internal/vault` does not exist yet.
+
+Run `make golden` to rewrite `internal/md/testdata/*.md` after an intended rendering change,
+and read the resulting diff before committing it.
 
 `docs/design.md` is the spec: numbered functional requirements (FR-1 … FR-7), the org →
 Markdown mapping tables, the package design, and a step-by-step implementation plan whose

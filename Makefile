@@ -7,7 +7,7 @@ COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
 DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS := -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)
 
-.PHONY: all build install test test-race cover vet fmt check clean
+.PHONY: all build install test test-race golden cover vet fmt check clean
 
 all: check build
 
@@ -22,6 +22,9 @@ test:
 
 test-race:
 	go test -race ./...
+
+golden:
+	go test ./internal/md/ -update
 
 cover:
 	go test -coverprofile=coverage.out ./...
