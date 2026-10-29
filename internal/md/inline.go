@@ -29,6 +29,8 @@ func inlines(ns []org.Inline) string {
 			b.WriteString(link(n))
 		case *org.Timestamp:
 			b.WriteString(timestamp(n))
+		case *org.FootnoteRef:
+			b.WriteString("[^" + n.Label + "]")
 		}
 	}
 	return b.String()

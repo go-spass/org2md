@@ -45,6 +45,12 @@ func renderNodes(b *strings.Builder, nodes []org.Node) {
 			writeBlock(b, quote(n))
 		case *org.Rule:
 			writeBlock(b, "---")
+		case *org.Table:
+			if s := table(n); s != "" {
+				writeBlock(b, s)
+			}
+		case *org.FootnoteDef:
+			writeBlock(b, footnoteDef(n))
 		}
 	}
 }

@@ -1,0 +1,11 @@
+* Tables and footnotes
+| Fruit | Qty | Note |
+|-------+-----+------|
+| <l>   | <r> | <c>  |
+| Apple | 3   | *fresh* |
+| Pear  | 12  |      |
+
+Prose with a footnote[fn:1] and another[fn:why].
+
+[fn:1] The first note.
+[fn:why] Because it matters.

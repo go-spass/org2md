@@ -39,6 +39,11 @@ type parser struct {
 	lines  [][]Inline
 	levels []listLevel
 	block  *openBlock
+	table  *Table
+
+	// footnote labels the paragraph being accumulated, turning it into a
+	// footnote definition when it is flushed.
+	footnote string
 }
 
 // listLevel is one indentation level of the list currently being parsed.
@@ -55,6 +60,14 @@ func (p *parser) line(line string) {
 		return
 	}
 	if p.beginBlock(line) {
+		return
+	}
+	// A table runs for as long as its rows do.
+	if p.table != nil && !isTableLine(line) {
+		p.endTable()
+	}
+	if isTableLine(line) {
+		p.tableLine(line)
 		return
 	}
 	if ruleRE.MatchString(line) {
@@ -77,6 +90,15 @@ func (p *parser) line(line string) {
 		}
 		return
 	}
+	if m := footnoteDefRE.FindStringSubmatch(line); m != nil {
+		p.endList()
+		p.flush()
+		p.footnote = m[1]
+		if m[2] != "" {
+			p.lines = append(p.lines, parseInlines(m[2]))
+		}
+		return
+	}
 	if item, indent, ordered, ok := parseListItem(line); ok {
 		p.flush()
 		p.addListItem(indent, ordered, item)
@@ -89,8 +111,15 @@ func (p *parser) line(line string) {
 	p.lines = append(p.lines, parseInlines(line))
 }
 
-// flush ends the paragraph being accumulated, if there is one.
+// flush ends the paragraph being accumulated, if there is one. A labelled
+// paragraph is a footnote definition.
 func (p *parser) flush() {
+	if p.footnote != "" {
+		p.add(&FootnoteDef{Label: p.footnote, Lines: p.lines})
+		p.footnote = ""
+		p.lines = nil
+		return
+	}
 	if len(p.lines) == 0 {
 		return
 	}

@@ -81,6 +81,7 @@ warning. Frontmatter is omitted entirely when nothing maps to it.
 | `#+BEGIN_QUOTE` … | `>` blockquote |
 | org table + `|---|` rule | GFM table with alignment row |
 | `[fn:1]` / footnote definition | `[^1]` / `[^1]:` |
+| org alignment cookie `\| <l> \|` | GFM alignment row `\| :--- \|` |
 | `:LOGBOOK:` drawer | dropped |
 | other drawers | dropped with a warning |
 | `# comment` lines | dropped |
@@ -214,7 +215,7 @@ and tests passing.
 | 3 | ✅ Inline phase: emphasis, code, links, timestamps (FR-5) | word-boundary rules hold; inline verbatim keeps its markers |
 | 4 | ✅ Lists, checkboxes, definition lists | nested mixed lists round-trip |
 | 5 | ✅ Blocks: src, example, quote, rules | language info string preserved; emphasis inside a src block provably untouched |
-| 6 | Tables and footnotes | GFM alignment row correct |
+| 6 | ✅ Tables and footnotes | GFM alignment row correct |
 | 7 | Frontmatter (FR-3), plus the warnings return Render needs for dropped drawers and unrecognized keywords | title/date/tags/properties emitted, empty case omitted |
 | 8 | Task metadata (FR-6) | TODO, priority, scheduled/deadline rendered |
 | 9 | `internal/vault` + CLI flags (FR-1, FR-2) | prompt, `-y`, `--no-move`, `--force`, `-o -` |

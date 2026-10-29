@@ -69,6 +69,9 @@ func (p *inlineParser) flushText() {
 // match reports the inline element starting at i and how many runes it spans,
 // or nil when i does not begin one.
 func (p *inlineParser) match(i int) (Inline, int) {
+	if n, width := p.footnoteRef(i); n != nil {
+		return n, width
+	}
 	if n, width := p.link(i); n != nil {
 		return n, width
 	}
@@ -76,6 +79,23 @@ func (p *inlineParser) match(i int) (Inline, int) {
 		return n, width
 	}
 	return p.emphasis(i)
+}
+
+func (p *inlineParser) footnoteRef(i int) (Inline, int) {
+	if p.src[i] != '[' || !strings.HasPrefix(string(p.src[i:]), "[fn:") {
+		return nil, 0
+	}
+	end := p.indexFrom(i+4, "]")
+	if end < 0 || end == i+4 {
+		return nil, 0
+	}
+
+	label := string(p.src[i+4 : end])
+	if strings.ContainsAny(label, "[]:") {
+		return nil, 0
+	}
+
+	return &FootnoteRef{Label: label}, end + 1 - i
 }
 
 func (p *inlineParser) link(i int) (Inline, int) {
