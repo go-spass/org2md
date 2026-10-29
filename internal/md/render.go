@@ -57,6 +57,9 @@ func (r *renderer) renderNodes(b *strings.Builder, nodes []org.Node) {
 		switch n := n.(type) {
 		case *org.Heading:
 			writeBlock(b, heading(n))
+			if dates := planning(n); dates != "" {
+				writeBlock(b, dates)
+			}
 			r.renderNodes(b, n.Children)
 		case *org.Paragraph:
 			writeBlock(b, paragraph(n))
@@ -95,11 +98,17 @@ func writeBlock(b *strings.Builder, s string) {
 
 func heading(h *org.Heading) string {
 	hashes := strings.Repeat("#", min(h.Level, maxHeadingLevel))
-	title := inlines(h.Title)
-	if title == "" {
+
+	var parts []string
+	if title := inlines(h.Title); title != "" {
+		parts = append(parts, title)
+	}
+	parts = append(parts, headingTags(h)...)
+
+	if len(parts) == 0 {
 		return hashes
 	}
-	return hashes + " " + title
+	return hashes + " " + strings.Join(parts, " ")
 }
 
 // paragraph trims trailing whitespace from each line. Org treats it as

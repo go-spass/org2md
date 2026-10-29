@@ -109,7 +109,10 @@ than string-substitutes.
 ### FR-6 — Task metadata
 
 - `* TODO Write the parser` → `## Write the parser` with the keyword stripped and a status
-  tag (`#todo`, `#done`, `#next`, …) appended to the heading line.
+  tag (`#todo`, `#done`, `#next`, …) appended to the heading line. The keyword set comes
+  from the file's `#+TODO:`/`#+SEQ_TODO:`/`#+TYP_TODO:` line when it has one, and otherwise
+  from a default list of the common workflow words.
+- Tag order on the heading line is title, status, priority, then the author's own tags.
 - Priority `[#A]` → `#priority/a`.
 - `SCHEDULED:`/`DEADLINE:` lines under a heading → `**Scheduled:** 2026-10-28` /
   `**Deadline:** 2026-10-28` as the first line of the heading's body.
@@ -217,7 +220,7 @@ and tests passing.
 | 5 | ✅ Blocks: src, example, quote, rules | language info string preserved; emphasis inside a src block provably untouched |
 | 6 | ✅ Tables and footnotes | GFM alignment row correct |
 | 7 | ✅ Frontmatter (FR-3), plus the warnings return for dropped drawers and unrecognized keywords | title/date/tags/properties emitted, empty case omitted |
-| 8 | Task metadata (FR-6) | TODO, priority, scheduled/deadline rendered |
+| 8 | ✅ Task metadata (FR-6), plus heading tags from FR-4 | TODO, priority, scheduled/deadline rendered |
 | 9 | `internal/vault` + CLI flags (FR-1, FR-2) | prompt, `-y`, `--no-move`, `--force`, `-o -` |
 | 10 | End-to-end golden test on a real note; README refresh | realistic org file converts cleanly |
 
