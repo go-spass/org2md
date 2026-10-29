@@ -10,15 +10,25 @@ the generated Markdown into `$MDNOTES_DIR/Inbox`.
 
 ## Repository state
 
-Pre-implementation. The repo currently holds only `README.md`, `LICENSE`, `.gitignore`, and
-this file — there is no `go.mod` and no Go source yet. Treat the README as the spec.
+Pre-implementation. The repo holds `README.md`, `LICENSE`, `.gitignore`, `docs/design.md`,
+and this file — there is no `go.mod` and no Go source yet.
 
-Before writing code, confirm with the user:
-- the module path (the remote is `github.com/go-spass/org2md`)
-- the layout (single-package `main` at the root vs. `cmd/org2md` + internal packages)
-- the CLI framework (stdlib `flag` vs. Cobra/urfave-cli)
+`docs/design.md` is the spec: numbered functional requirements (FR-1 … FR-7), the org →
+Markdown mapping tables, the package design, and a step-by-step implementation plan. Read it
+before writing code, and update it when a decision changes rather than letting the code
+drift from it.
 
-Do not scaffold these choices unilaterally.
+Settled decisions:
+
+- Module path `github.com/go-spass/org2md`
+- `cmd/org2md/` for CLI wiring, `internal/org` (parser), `internal/md` (renderer),
+  `internal/vault` (output placement and the `MDNOTES_DIR` move)
+- `spf13/cobra` for the CLI
+- v1 scope: core org syntax + YAML frontmatter + task metadata
+- Output: explicit `-o` wins; otherwise write beside the source and offer the move
+
+The open items are listed at the end of `docs/design.md` — raise them rather than deciding
+them silently.
 
 ## Workflow
 
@@ -55,10 +65,14 @@ Makefile instead of working around it.
 
 ## Design notes
 
-- The org→Markdown conversion and the file-move/Obsidian step are separate concerns; keep
-  conversion pure (string/reader in, string/writer out) so it is testable without touching
-  the filesystem or `MDNOTES_DIR`.
-- The `MDNOTES_DIR` move is interactive ("offer to move"), so it must be skippable — keep
-  it out of the conversion path and behind a flag for non-interactive use.
-- Table-driven tests with org input and expected Markdown output fit this problem well;
-  `testdata/` golden files are the natural place for larger fixtures.
+- Conversion is pure: `io.Reader` in, string out, no filesystem and no environment access.
+  Anything interactive or environment-dependent belongs in `internal/vault` or `main`.
+- Parsing is line-oriented in two phases (blocks, then inlines). Inline markup must never be
+  applied inside source/example/verbatim content — a bare `*` in a shell snippet has to
+  survive. This is why the tool parses instead of running string substitutions.
+- `internal/org` owns org syntax; `internal/md` owns Obsidian conventions. A construct with
+  no Markdown equivalent is a rendering decision, not a parsing one.
+- Unrecognized org syntax passes through verbatim with a warning; it never fails the run.
+- Tests are table-driven snippets per construct, plus `testdata/` golden files for whole
+  documents. `internal/vault` uses `t.TempDir()` and `t.Setenv`, with the prompt reading from
+  an injected `io.Reader` so no test needs a TTY.
