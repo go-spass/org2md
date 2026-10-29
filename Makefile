@@ -25,6 +25,7 @@ test-race:
 
 golden:
 	go test ./internal/md/ -update
+	go test ./cmd/org2md/ -update
 
 cover:
 	go test -coverprofile=coverage.out ./...

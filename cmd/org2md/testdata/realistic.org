@@ -1,0 +1,59 @@
+#+TITLE: org2md: shipping the converter
+#+DATE: <2026-10-28 Wed>
+#+AUTHOR: Chris
+#+FILETAGS: :project:go:
+#+OPTIONS: toc:nil
+#+TODO: TODO NEXT | DONE
+:PROPERTIES:
+:ID: 2026-10-28-org2md
+:Category: projects
+:END:
+
+# a note to self, dropped on conversion
+
+The converter turns org files into Obsidian notes. See [[file:second-brain.org][the vault note]]
+for how the inbox is organised.
+
+* DONE Parse the easy constructs :parser:
+CLOSED: [2026-10-28 Wed 11:15]
+:LOGBOOK:
+CLOCK: [2026-10-28 Wed 09:00]--[2026-10-28 Wed 11:15]
+:END:
+Headings, paragraphs and /inline markup/ all work. The tricky part was org's
+word-boundary rule: without it =some_variable_name= loses a chunk.
+
+** Constructs covered
+- headings and paragraphs
+- lists, including
+  - nesting
+  - [ ] checkboxes
+  - [X] and finished ones
+- tables :: with alignment
+- blocks
+
+* TODO [#A] Decide on the inbox layout :vault:
+SCHEDULED: <2026-10-29 Thu 09:00 +1w>
+DEADLINE: <2026-11-01 Sun>
+Options, roughly:
+
+| Layout       | Effort | Note        |
+|--------------+--------+-------------|
+| <l>          | <c>    | <r>         |
+| Flat Inbox   | low    | the default |
+| Per-project  | high   | tidier      |
+
+#+BEGIN_SRC sh
+# the move is a rename when it can be
+mv note.md "$MDNOTES_DIR/Inbox/"
+#+END_SRC
+
+#+BEGIN_QUOTE
+Capture first, organise later.[fn:1]
+#+END_QUOTE
+
+-----
+
+* NEXT Write the README :docs:
+Nothing *fancy* needed, just the flags and the limits.
+
+[fn:1] The usual PARA advice.
