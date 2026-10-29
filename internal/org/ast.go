@@ -6,9 +6,13 @@ type Node interface {
 	node()
 }
 
-// Document is a parsed org file.
+// Document is a parsed org file. Meta holds its #+KEYWORD: lines, keyed by
+// upcased name, and Properties the file-level :PROPERTIES: drawer. Both are nil
+// when the file has none.
 type Document struct {
-	Children []Node
+	Meta       map[string]string
+	Properties map[string]string
+	Children   []Node
 }
 
 // Heading is an org headline and everything beneath it, including the headings
@@ -58,6 +62,13 @@ type Quote struct {
 // Rule is a horizontal rule.
 type Rule struct{}
 
+// Drawer is a drawer other than the file-level :PROPERTIES: one. Its contents
+// are literal: what becomes of them is the renderer's decision.
+type Drawer struct {
+	Name  string
+	Lines []string
+}
+
 // Table is an org table. Separator rows are kept in place rather than
 // interpreted, because how many of them a header may have is a Markdown
 // question rather than an org one. Align is set only when the table declares
@@ -106,6 +117,7 @@ func (*Block) node()     {}
 func (*Quote) node()     {}
 func (*Rule) node()      {}
 func (*Table) node()     {}
+func (*Drawer) node()    {}
 
 func (*FootnoteDef) node() {}
 

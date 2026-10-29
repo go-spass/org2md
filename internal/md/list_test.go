@@ -110,7 +110,7 @@ func TestRenderLists(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Render(tt.doc)
+			got, _ := Render(tt.doc)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("Render() mismatch (-want +got):\n%s", diff)
 			}
