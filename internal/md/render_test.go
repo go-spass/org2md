@@ -27,24 +27,24 @@ func TestRender(t *testing.T) {
 		{
 			name: "paragraph keeps its line breaks",
 			doc: &org.Document{Children: []org.Node{
-				&org.Paragraph{Lines: []string{"One line.", "Another line."}},
+				&org.Paragraph{Lines: textLines("One line.", "Another line.")},
 			}},
 			want: "One line.\nAnother line.\n",
 		},
 		{
 			name: "blocks are separated by a blank line",
 			doc: &org.Document{Children: []org.Node{
-				&org.Paragraph{Lines: []string{"First."}},
-				&org.Paragraph{Lines: []string{"Second."}},
+				&org.Paragraph{Lines: textLines("First.")},
+				&org.Paragraph{Lines: textLines("Second.")},
 			}},
 			want: "First.\n\nSecond.\n",
 		},
 		{
 			name: "heading level maps to hash count",
 			doc: &org.Document{Children: []org.Node{
-				&org.Heading{Level: 1, Title: "One", Children: []org.Node{
-					&org.Heading{Level: 2, Title: "Two", Children: []org.Node{
-						&org.Heading{Level: 3, Title: "Three"},
+				&org.Heading{Level: 1, Title: txt("One"), Children: []org.Node{
+					&org.Heading{Level: 2, Title: txt("Two"), Children: []org.Node{
+						&org.Heading{Level: 3, Title: txt("Three")},
 					}},
 				}},
 			}},
@@ -53,8 +53,8 @@ func TestRender(t *testing.T) {
 		{
 			name: "heading body follows the heading",
 			doc: &org.Document{Children: []org.Node{
-				&org.Heading{Level: 1, Title: "Heading", Children: []org.Node{
-					&org.Paragraph{Lines: []string{"Body."}},
+				&org.Heading{Level: 1, Title: txt("Heading"), Children: []org.Node{
+					&org.Paragraph{Lines: textLines("Body.")},
 				}},
 			}},
 			want: "# Heading\n\nBody.\n",
@@ -62,8 +62,8 @@ func TestRender(t *testing.T) {
 		{
 			name: "levels deeper than six clamp to six",
 			doc: &org.Document{Children: []org.Node{
-				&org.Heading{Level: 7, Title: "Too deep"},
-				&org.Heading{Level: 9, Title: "Deeper still"},
+				&org.Heading{Level: 7, Title: txt("Too deep")},
+				&org.Heading{Level: 9, Title: txt("Deeper still")},
 			}},
 			want: "###### Too deep\n\n###### Deeper still\n",
 		},
@@ -77,9 +77,30 @@ func TestRender(t *testing.T) {
 		{
 			name: "trailing whitespace is trimmed so it cannot become a hard break",
 			doc: &org.Document{Children: []org.Node{
-				&org.Paragraph{Lines: []string{"Soft wrapped  ", "in org.\t"}},
+				&org.Paragraph{Lines: textLines("Soft wrapped  ", "in org.\t")},
 			}},
 			want: "Soft wrapped\nin org.\n",
+		},
+		{
+			name: "markup in a heading title and its body",
+			doc: &org.Document{Children: []org.Node{
+				&org.Heading{
+					Level: 1,
+					Title: []org.Inline{
+						&org.Text{Value: "A "},
+						&org.Bold{Children: txt("bold")},
+						&org.Text{Value: " title"},
+					},
+					Children: []org.Node{
+						&org.Paragraph{Lines: [][]org.Inline{{
+							&org.Text{Value: "See "},
+							&org.Link{Target: "file:other.org", Desc: txt("the other note")},
+							&org.Text{Value: "."},
+						}}},
+					},
+				},
+			}},
+			want: "# A **bold** title\n\nSee [[other|the other note]].\n",
 		},
 	}
 
