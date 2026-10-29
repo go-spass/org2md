@@ -15,14 +15,18 @@ const maxHeadingLevel = 6
 // Render converts a parsed org document to Markdown. The result ends with a
 // single newline, or is empty when the document holds nothing.
 func Render(doc *org.Document) string {
-	var b strings.Builder
-	renderNodes(&b, doc.Children)
-
-	out := strings.TrimRight(b.String(), "\n")
+	out := strings.TrimRight(blocks(doc.Children), "\n")
 	if out == "" {
 		return ""
 	}
 	return out + "\n"
+}
+
+// blocks renders a sequence of block nodes, separated by blank lines.
+func blocks(nodes []org.Node) string {
+	var b strings.Builder
+	renderNodes(&b, nodes)
+	return b.String()
 }
 
 func renderNodes(b *strings.Builder, nodes []org.Node) {
@@ -35,6 +39,12 @@ func renderNodes(b *strings.Builder, nodes []org.Node) {
 			writeBlock(b, paragraph(n))
 		case *org.List:
 			writeBlock(b, list(n, ""))
+		case *org.Block:
+			writeBlock(b, block(n))
+		case *org.Quote:
+			writeBlock(b, quote(n))
+		case *org.Rule:
+			writeBlock(b, "---")
 		}
 	}
 }

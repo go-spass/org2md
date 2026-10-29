@@ -41,6 +41,23 @@ type ListItem struct {
 	Children []Node
 }
 
+// Block is a literal block: a source block, an example block, or a block whose
+// type org2md does not recognize. Its lines are never parsed for markup, which
+// is what lets org syntax inside a code sample survive.
+type Block struct {
+	Lang  string
+	Lines []string
+}
+
+// Quote is a #+BEGIN_QUOTE block. Unlike Block its contents are org markup, so
+// they are parsed.
+type Quote struct {
+	Children []Node
+}
+
+// Rule is a horizontal rule.
+type Rule struct{}
+
 // Checkbox is the state of a list item's checkbox, if it has one.
 type Checkbox int
 
@@ -54,6 +71,9 @@ const (
 func (*Heading) node()   {}
 func (*Paragraph) node() {}
 func (*List) node()      {}
+func (*Block) node()     {}
+func (*Quote) node()     {}
+func (*Rule) node()      {}
 
 // Inline is a span of text inside a block. The set of implementations is closed
 // to this package, so a type switch over them is exhaustive.

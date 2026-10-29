@@ -25,6 +25,9 @@ func Parse(r io.Reader) (*Document, error) {
 	if err := s.Err(); err != nil {
 		return nil, err
 	}
+	if p.block != nil {
+		p.endBlock()
+	}
 	p.flush()
 
 	return p.doc, nil
@@ -35,6 +38,7 @@ type parser struct {
 	open   []*Heading
 	lines  [][]Inline
 	levels []listLevel
+	block  *openBlock
 }
 
 // listLevel is one indentation level of the list currently being parsed.
@@ -44,6 +48,21 @@ type listLevel struct {
 }
 
 func (p *parser) line(line string) {
+	// A block's contents are literal, so this has to come first: a line
+	// looking like a heading or a list item inside a source block is neither.
+	if p.block != nil {
+		p.blockLine(line)
+		return
+	}
+	if p.beginBlock(line) {
+		return
+	}
+	if ruleRE.MatchString(line) {
+		p.endList()
+		p.flush()
+		p.add(&Rule{})
+		return
+	}
 	if m := headingRE.FindStringSubmatch(line); m != nil {
 		p.endList()
 		p.flush()
