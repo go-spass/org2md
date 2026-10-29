@@ -58,6 +58,37 @@ type Quote struct {
 // Rule is a horizontal rule.
 type Rule struct{}
 
+// Table is an org table. Separator rows are kept in place rather than
+// interpreted, because how many of them a header may have is a Markdown
+// question rather than an org one. Align is set only when the table declares
+// alignment cookies.
+type Table struct {
+	Align []Alignment
+	Rows  []*TableRow
+}
+
+// TableRow is one row of a table, or one of its horizontal separators.
+type TableRow struct {
+	Separator bool
+	Cells     [][]Inline
+}
+
+// Alignment is a column's declared alignment.
+type Alignment int
+
+const (
+	AlignDefault Alignment = iota
+	AlignLeft
+	AlignCenter
+	AlignRight
+)
+
+// FootnoteDef is a footnote definition: [fn:label] and the text that follows.
+type FootnoteDef struct {
+	Label string
+	Lines [][]Inline
+}
+
 // Checkbox is the state of a list item's checkbox, if it has one.
 type Checkbox int
 
@@ -74,6 +105,9 @@ func (*List) node()      {}
 func (*Block) node()     {}
 func (*Quote) node()     {}
 func (*Rule) node()      {}
+func (*Table) node()     {}
+
+func (*FootnoteDef) node() {}
 
 // Inline is a span of text inside a block. The set of implementations is closed
 // to this package, so a type switch over them is exhaustive.
@@ -118,6 +152,11 @@ type Link struct {
 	Desc   []Inline
 }
 
+// FootnoteRef is a reference to a footnote, [fn:label].
+type FootnoteRef struct {
+	Label string
+}
+
 // Timestamp is an active org timestamp. Date is the ISO date; Rest holds a time
 // of day and any repeater. The day name is dropped as redundant.
 type Timestamp struct {
@@ -125,11 +164,12 @@ type Timestamp struct {
 	Rest string
 }
 
-func (*Text) inline()      {}
-func (*Bold) inline()      {}
-func (*Italic) inline()    {}
-func (*Underline) inline() {}
-func (*Strike) inline()    {}
-func (*Code) inline()      {}
-func (*Link) inline()      {}
-func (*Timestamp) inline() {}
+func (*Text) inline()        {}
+func (*Bold) inline()        {}
+func (*Italic) inline()      {}
+func (*Underline) inline()   {}
+func (*Strike) inline()      {}
+func (*Code) inline()        {}
+func (*Link) inline()        {}
+func (*Timestamp) inline()   {}
+func (*FootnoteRef) inline() {}
