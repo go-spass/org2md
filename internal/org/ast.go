@@ -25,8 +25,35 @@ type Paragraph struct {
 	Lines [][]Inline
 }
 
+// List is a run of list items at one indentation level.
+type List struct {
+	Ordered bool
+	Items   []*ListItem
+}
+
+// ListItem is one entry in a list. Term is set only for a definition item
+// (- term :: definition). Lines holds the item's own text, including any
+// indented continuation lines, and Children holds lists nested under it.
+type ListItem struct {
+	Checkbox Checkbox
+	Term     []Inline
+	Lines    [][]Inline
+	Children []Node
+}
+
+// Checkbox is the state of a list item's checkbox, if it has one.
+type Checkbox int
+
+const (
+	NoCheckbox Checkbox = iota
+	Unchecked
+	Checked
+	PartiallyChecked
+)
+
 func (*Heading) node()   {}
 func (*Paragraph) node() {}
+func (*List) node()      {}
 
 // Inline is a span of text inside a block. The set of implementations is closed
 // to this package, so a type switch over them is exhaustive.
