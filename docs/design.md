@@ -216,7 +216,7 @@ and tests passing.
 | 4 | ✅ Lists, checkboxes, definition lists | nested mixed lists round-trip |
 | 5 | ✅ Blocks: src, example, quote, rules | language info string preserved; emphasis inside a src block provably untouched |
 | 6 | ✅ Tables and footnotes | GFM alignment row correct |
-| 7 | Frontmatter (FR-3), plus the warnings return Render needs for dropped drawers and unrecognized keywords | title/date/tags/properties emitted, empty case omitted |
+| 7 | ✅ Frontmatter (FR-3), plus the warnings return for dropped drawers and unrecognized keywords | title/date/tags/properties emitted, empty case omitted |
 | 8 | Task metadata (FR-6) | TODO, priority, scheduled/deadline rendered |
 | 9 | `internal/vault` + CLI flags (FR-1, FR-2) | prompt, `-y`, `--no-move`, `--force`, `-o -` |
 | 10 | End-to-end golden test on a real note; README refresh | realistic org file converts cleanly |

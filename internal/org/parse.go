@@ -28,6 +28,9 @@ func Parse(r io.Reader) (*Document, error) {
 	if p.block != nil {
 		p.endBlock()
 	}
+	if p.drawer != nil {
+		p.endDrawer()
+	}
 	p.flush()
 
 	return p.doc, nil
@@ -39,7 +42,12 @@ type parser struct {
 	lines  [][]Inline
 	levels []listLevel
 	block  *openBlock
+	drawer *openDrawer
 	table  *Table
+
+	// seenHeading marks the end of the file-level region, where a
+	// :PROPERTIES: drawer describes the document itself.
+	seenHeading bool
 
 	// footnote labels the paragraph being accumulated, turning it into a
 	// footnote definition when it is flushed.
@@ -59,7 +67,20 @@ func (p *parser) line(line string) {
 		p.blockLine(line)
 		return
 	}
+	if p.drawer != nil {
+		p.drawerLine(line)
+		return
+	}
 	if p.beginBlock(line) {
+		return
+	}
+	if p.beginDrawer(line) {
+		return
+	}
+	if p.keyword(line) {
+		return
+	}
+	if commentRE.MatchString(line) {
 		return
 	}
 	// A table runs for as long as its rows do.
@@ -79,6 +100,7 @@ func (p *parser) line(line string) {
 	if m := headingRE.FindStringSubmatch(line); m != nil {
 		p.endList()
 		p.flush()
+		p.seenHeading = true
 		p.openHeading(&Heading{Level: len(m[1]), Title: parseInlines(strings.TrimSpace(m[2]))})
 		return
 	}

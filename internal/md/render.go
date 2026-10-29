@@ -2,6 +2,7 @@
 package md
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-spass/org2md/internal/org"
@@ -12,29 +13,51 @@ import (
 // so deeper levels are clamped.
 const maxHeadingLevel = 6
 
-// Render converts a parsed org document to Markdown. The result ends with a
-// single newline, or is empty when the document holds nothing.
-func Render(doc *org.Document) string {
-	out := strings.TrimRight(blocks(doc.Children), "\n")
-	if out == "" {
-		return ""
+// renderer carries the warnings a conversion accumulates. Nothing here fails,
+// but org constructs with no Markdown equivalent are reported rather than
+// dropped in silence.
+type renderer struct {
+	warnings []string
+}
+
+func (r *renderer) warnf(format string, args ...any) {
+	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
+}
+
+// Render converts a parsed org document to Markdown, returning the result and
+// any warnings in document order. The result ends with a single newline, or is
+// empty when the document holds nothing.
+func Render(doc *org.Document) (string, []string) {
+	r := &renderer{}
+
+	front := r.frontmatter(doc)
+	body := strings.TrimRight(r.blocks(doc.Children), "\n")
+
+	switch {
+	case front == "" && body == "":
+		return "", r.warnings
+	case front == "":
+		return body + "\n", r.warnings
+	case body == "":
+		return front, r.warnings
+	default:
+		return front + "\n" + body + "\n", r.warnings
 	}
-	return out + "\n"
 }
 
 // blocks renders a sequence of block nodes, separated by blank lines.
-func blocks(nodes []org.Node) string {
+func (r *renderer) blocks(nodes []org.Node) string {
 	var b strings.Builder
-	renderNodes(&b, nodes)
+	r.renderNodes(&b, nodes)
 	return b.String()
 }
 
-func renderNodes(b *strings.Builder, nodes []org.Node) {
+func (r *renderer) renderNodes(b *strings.Builder, nodes []org.Node) {
 	for _, n := range nodes {
 		switch n := n.(type) {
 		case *org.Heading:
 			writeBlock(b, heading(n))
-			renderNodes(b, n.Children)
+			r.renderNodes(b, n.Children)
 		case *org.Paragraph:
 			writeBlock(b, paragraph(n))
 		case *org.List:
@@ -42,7 +65,13 @@ func renderNodes(b *strings.Builder, nodes []org.Node) {
 		case *org.Block:
 			writeBlock(b, block(n))
 		case *org.Quote:
-			writeBlock(b, quote(n))
+			writeBlock(b, r.quote(n))
+		case *org.Drawer:
+			// A logbook is clock data with nothing to say in Markdown; any
+			// other drawer is content the reader loses.
+			if n.Name != "LOGBOOK" {
+				r.warnf("dropped :%s: drawer", n.Name)
+			}
 		case *org.Rule:
 			writeBlock(b, "---")
 		case *org.Table:

@@ -1,0 +1,19 @@
+#+TITLE: Capture: a note about org2md
+#+DATE: <2026-10-28 Wed>
+#+AUTHOR: Chris
+#+FILETAGS: :org:tooling:
+#+OPTIONS: toc:nil
+:PROPERTIES:
+:ID: 7f3a
+:Category: notes
+:END:
+
+# this comment is dropped
+
+Body text before the first heading.
+
+* A heading
+:LOGBOOK:
+CLOCK: [2026-10-28 Wed 10:00]--[2026-10-28 Wed 10:30]
+:END:
+Content under the heading.

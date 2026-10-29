@@ -82,6 +82,9 @@ Makefile instead of working around it.
 - `internal/org` owns org syntax; `internal/md` owns Obsidian conventions. A construct with
   no Markdown equivalent is a rendering decision, not a parsing one.
 - Unrecognized org syntax passes through verbatim with a warning; it never fails the run.
+- `Render` returns `(string, []string)`: the Markdown and the warnings, in document order.
+  Anything org can say that Markdown cannot is reported rather than dropped in silence, with
+  `:LOGBOOK:` the one deliberate exception.
 - Tests are table-driven snippets per construct, plus `testdata/` golden files for whole
   documents. `internal/vault` uses `t.TempDir()` and `t.Setenv`, with the prompt reading from
   an injected `io.Reader` so no test needs a TTY.

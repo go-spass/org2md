@@ -43,8 +43,8 @@ func longestBacktickRun(lines []string) int {
 
 // quote renders a blockquote. Its children are ordinary blocks, so they are
 // rendered first and then prefixed line by line.
-func quote(q *org.Quote) string {
-	lines := strings.Split(strings.TrimRight(blocks(q.Children), "\n"), "\n")
+func (r *renderer) quote(q *org.Quote) string {
+	lines := strings.Split(strings.TrimRight(r.blocks(q.Children), "\n"), "\n")
 	for i, line := range lines {
 		if line == "" {
 			lines[i] = ">"
