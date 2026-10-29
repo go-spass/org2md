@@ -10,13 +10,17 @@ the generated Markdown into `$MDNOTES_DIR/Inbox`.
 
 ## Repository state
 
-Working end to end. `cmd/org2md` parses an org file, renders it, and places the result;
-`internal/org` parses, `internal/md` renders, `internal/vault` decides where the output goes
-and offers the `$MDNOTES_DIR/Inbox` move. Step 10 of the plan is the remaining work: an
-end-to-end test over a realistic note, and a README refresh.
+v1 complete: every step of the plan in `docs/design.md` is done. `cmd/org2md` parses an org
+file, renders it, and places the result; `internal/org` parses, `internal/md` renders,
+`internal/vault` decides where the output goes and offers the `$MDNOTES_DIR/Inbox` move.
 
-Run `make golden` to rewrite `internal/md/testdata/*.md` after an intended rendering change,
-and read the resulting diff before committing it.
+Further work starts from the open questions at the end of `docs/design.md`. Add a plan step
+there before building, so the step-per-PR history stays readable.
+
+Run `make golden` to rewrite the golden files in `internal/md/testdata` and
+`cmd/org2md/testdata` after an intended rendering change, and read the resulting diff before
+committing it. The `cmd` fixture is produced by the built binary, so `make golden` runs a
+build; `go test -short` skips the end-to-end tests that need one.
 
 `docs/design.md` is the spec: numbered functional requirements (FR-1 … FR-7), the org →
 Markdown mapping tables, the package design, and a step-by-step implementation plan whose
