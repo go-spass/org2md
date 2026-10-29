@@ -211,9 +211,9 @@ and tests passing.
 | 0 | ✅ Scaffold: `go.mod`, `Makefile`, Cobra root command, `--version` | `make build && make test` pass |
 | 1 | ✅ `internal/org`: headings + paragraphs | parser produces the AST for a nested-heading document |
 | 2 | ✅ `internal/md`: headings + paragraphs, golden harness | first end-to-end snippet converts |
-| 3 | Inline phase: emphasis, code, links, timestamps (FR-5) | emphasis inside a src block provably untouched |
+| 3 | ✅ Inline phase: emphasis, code, links, timestamps (FR-5) | word-boundary rules hold; inline verbatim keeps its markers |
 | 4 | Lists, checkboxes, definition lists | nested mixed lists round-trip |
-| 5 | Blocks: src, example, quote, rules | language info string preserved |
+| 5 | Blocks: src, example, quote, rules | language info string preserved; emphasis inside a src block provably untouched |
 | 6 | Tables and footnotes | GFM alignment row correct |
 | 7 | Frontmatter (FR-3) | title/date/tags/properties emitted, empty case omitted |
 | 8 | Task metadata (FR-6) | TODO, priority, scheduled/deadline rendered |

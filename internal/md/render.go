@@ -48,10 +48,11 @@ func writeBlock(b *strings.Builder, s string) {
 
 func heading(h *org.Heading) string {
 	hashes := strings.Repeat("#", min(h.Level, maxHeadingLevel))
-	if h.Title == "" {
+	title := inlines(h.Title)
+	if title == "" {
 		return hashes
 	}
-	return hashes + " " + h.Title
+	return hashes + " " + title
 }
 
 // paragraph trims trailing whitespace from each line. Org treats it as
@@ -59,7 +60,7 @@ func heading(h *org.Heading) string {
 func paragraph(p *org.Paragraph) string {
 	lines := make([]string, len(p.Lines))
 	for i, line := range p.Lines {
-		lines[i] = strings.TrimRight(line, " \t")
+		lines[i] = strings.TrimRight(inlines(line), " \t")
 	}
 	return strings.Join(lines, "\n")
 }

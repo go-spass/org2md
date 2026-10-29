@@ -33,20 +33,20 @@ func Parse(r io.Reader) (*Document, error) {
 type parser struct {
 	doc   *Document
 	open  []*Heading
-	lines []string
+	lines [][]Inline
 }
 
 func (p *parser) line(line string) {
 	if m := headingRE.FindStringSubmatch(line); m != nil {
 		p.flush()
-		p.openHeading(&Heading{Level: len(m[1]), Title: strings.TrimSpace(m[2])})
+		p.openHeading(&Heading{Level: len(m[1]), Title: parseInlines(strings.TrimSpace(m[2]))})
 		return
 	}
 	if strings.TrimSpace(line) == "" {
 		p.flush()
 		return
 	}
-	p.lines = append(p.lines, line)
+	p.lines = append(p.lines, parseInlines(line))
 }
 
 // flush ends the paragraph being accumulated, if there is one.
