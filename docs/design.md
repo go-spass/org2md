@@ -209,7 +209,7 @@ and tests passing.
 | # | Step | Done when |
 | --- | --- | --- |
 | 0 | ✅ Scaffold: `go.mod`, `Makefile`, Cobra root command, `--version` | `make build && make test` pass |
-| 1 | `internal/org`: headings + paragraphs | parser produces the AST for a nested-heading document |
+| 1 | ✅ `internal/org`: headings + paragraphs | parser produces the AST for a nested-heading document |
 | 2 | `internal/md`: headings + paragraphs, golden harness | first end-to-end snippet converts |
 | 3 | Inline phase: emphasis, code, links, timestamps (FR-5) | emphasis inside a src block provably untouched |
 | 4 | Lists, checkboxes, definition lists | nested mixed lists round-trip |
