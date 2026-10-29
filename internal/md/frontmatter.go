@@ -18,6 +18,14 @@ var frontmatterKeywords = map[string]bool{
 	"FILETAGS": true,
 }
 
+// consumedKeywords have no frontmatter equivalent but are not lost either:
+// the parser acts on them, so reporting them as dropped would be wrong.
+var consumedKeywords = map[string]bool{
+	"TODO":     true,
+	"SEQ_TODO": true,
+	"TYP_TODO": true,
+}
+
 var (
 	// A scalar is safe unquoted when it starts with an alphanumeric, holds
 	// nothing YAML treats specially, and is not padded with whitespace.
@@ -63,7 +71,7 @@ func (r *renderer) frontmatter(doc *org.Document) string {
 	}
 
 	for _, name := range slices.Sorted(maps.Keys(doc.Meta)) {
-		if !frontmatterKeywords[name] {
+		if !frontmatterKeywords[name] && !consumedKeywords[name] {
 			r.warnf("dropped #+%s: no frontmatter equivalent", name)
 		}
 	}

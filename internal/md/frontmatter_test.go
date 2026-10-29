@@ -152,6 +152,14 @@ func TestWarnings(t *testing.T) {
 			},
 		},
 		{
+			name: "a keyword the parser acts on is not reported as dropped",
+			doc: &org.Document{Meta: map[string]string{
+				"TODO":    "TODO NEXT | DONE",
+				"OPTIONS": "toc:nil",
+			}},
+			want: []string{"dropped #+OPTIONS: no frontmatter equivalent"},
+		},
+		{
 			name: "a dropped drawer",
 			doc:  doc(&org.Drawer{Name: "NOTES", Lines: []string{"private"}}),
 			want: []string{"dropped :NOTES: drawer"},

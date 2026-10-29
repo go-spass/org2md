@@ -45,6 +45,10 @@ type parser struct {
 	drawer *openDrawer
 	table  *Table
 
+	// todoKeywords is this file's todo keyword set, built on first use so a
+	// #+TODO: line anywhere above the first headline is honoured.
+	todoKeywords map[string]bool
+
 	// seenHeading marks the end of the file-level region, where a
 	// :PROPERTIES: drawer describes the document itself.
 	seenHeading bool
@@ -99,9 +103,16 @@ func (p *parser) line(line string) {
 	}
 	if m := headingRE.FindStringSubmatch(line); m != nil {
 		p.endList()
+		p.endTable()
 		p.flush()
 		p.seenHeading = true
-		p.openHeading(&Heading{Level: len(m[1]), Title: parseInlines(strings.TrimSpace(m[2]))})
+
+		h := &Heading{Level: len(m[1])}
+		p.parseHeadline(h, strings.TrimSpace(m[2]))
+		p.openHeading(h)
+		return
+	}
+	if p.planningLine(line) {
 		return
 	}
 	if strings.TrimSpace(line) == "" {

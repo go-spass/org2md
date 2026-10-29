@@ -18,7 +18,20 @@ type Document struct {
 // Heading is an org headline and everything beneath it, including the headings
 // nested under it.
 type Heading struct {
-	Level    int
+	Level int
+
+	// Todo is the headline's keyword as written, Priority its letter, and Tags
+	// the colon-delimited tags from the end of the headline.
+	Todo     string
+	Priority string
+	Tags     []string
+
+	// Scheduled, Deadline and Closed come from the planning line beneath the
+	// headline, if it has one.
+	Scheduled *Timestamp
+	Deadline  *Timestamp
+	Closed    *Timestamp
+
 	Title    []Inline
 	Children []Node
 }
