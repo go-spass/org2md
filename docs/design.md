@@ -203,11 +203,12 @@ information is stamped via `-ldflags -X main.version=…`.
 
 ## 5. Implementation plan
 
-Each step is red-green-refactor and leaves the tree building and tests passing.
+Each step is red-green-refactor, gets its own branch and PR, and leaves the tree building
+and tests passing.
 
 | # | Step | Done when |
 | --- | --- | --- |
-| 0 | Scaffold: `go.mod`, `Makefile`, Cobra root command, `--version` | `make build && make test` pass |
+| 0 | ✅ Scaffold: `go.mod`, `Makefile`, Cobra root command, `--version` | `make build && make test` pass |
 | 1 | `internal/org`: headings + paragraphs | parser produces the AST for a nested-heading document |
 | 2 | `internal/md`: headings + paragraphs, golden harness | first end-to-end snippet converts |
 | 3 | Inline phase: emphasis, code, links, timestamps (FR-5) | emphasis inside a src block provably untouched |

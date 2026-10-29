@@ -10,13 +10,14 @@ the generated Markdown into `$MDNOTES_DIR/Inbox`.
 
 ## Repository state
 
-Pre-implementation. The repo holds `README.md`, `LICENSE`, `.gitignore`, `docs/design.md`,
-and this file — there is no `go.mod` and no Go source yet.
+Scaffolded, conversion not yet written. `cmd/org2md` holds the Cobra root command and
+builds; `RunE` returns `errNotImplemented` until step 2 of the plan wires the converter in.
+`internal/org`, `internal/md`, and `internal/vault` do not exist yet.
 
 `docs/design.md` is the spec: numbered functional requirements (FR-1 … FR-7), the org →
-Markdown mapping tables, the package design, and a step-by-step implementation plan. Read it
-before writing code, and update it when a decision changes rather than letting the code
-drift from it.
+Markdown mapping tables, the package design, and a step-by-step implementation plan whose
+table tracks which steps are done. Read it before writing code, and update it when a
+decision changes rather than letting the code drift from it.
 
 Settled decisions:
 
@@ -35,6 +36,10 @@ them silently.
 **Test-driven.** Write the failing test first, watch it fail, then write the minimum code to
 make it pass, then refactor. No production code lands without a test that drove it. When
 fixing a bug, reproduce it as a failing test before touching the fix.
+
+**One branch and one PR per plan step.** Each numbered step in `docs/design.md` gets its
+own branch, its own PR, and a tick in the plan table when it merges. Do not roll two steps
+into one branch.
 
 **Feature branches only.** Never commit to `main`. Branch first (`feat/...`, `fix/...`,
 `refactor/...`, `test/...`, `docs/...` matching the conventional-commit type), make the
