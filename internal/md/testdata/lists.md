@@ -1,0 +1,21 @@
+# Lists
+
+- first bullet
+- second bullet
+  a continuation of the second bullet
+- third bullet
+  - nested bullet
+    1. ordered under a bullet
+    2. still ordered
+- [ ] a task
+- [x] a finished task
+- [/] a partial task
+
+1. step one
+2. step two
+   - a detail
+
+Definitions:
+
+- **org**: an outliner and a plain-text format
+- **markdown**: what Obsidian reads

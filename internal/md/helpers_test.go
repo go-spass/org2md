@@ -13,3 +13,8 @@ func textLines(ss ...string) [][]org.Inline {
 	}
 	return out
 }
+
+// doc wraps top-level nodes in a document.
+func doc(nodes ...org.Node) *org.Document {
+	return &org.Document{Children: nodes}
+}

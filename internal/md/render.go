@@ -33,6 +33,8 @@ func renderNodes(b *strings.Builder, nodes []org.Node) {
 			renderNodes(b, n.Children)
 		case *org.Paragraph:
 			writeBlock(b, paragraph(n))
+		case *org.List:
+			writeBlock(b, list(n, ""))
 		}
 	}
 }

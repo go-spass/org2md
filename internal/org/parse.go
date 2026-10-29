@@ -31,21 +31,42 @@ func Parse(r io.Reader) (*Document, error) {
 }
 
 type parser struct {
-	doc   *Document
-	open  []*Heading
-	lines [][]Inline
+	doc    *Document
+	open   []*Heading
+	lines  [][]Inline
+	levels []listLevel
+}
+
+// listLevel is one indentation level of the list currently being parsed.
+type listLevel struct {
+	list   *List
+	indent int
 }
 
 func (p *parser) line(line string) {
 	if m := headingRE.FindStringSubmatch(line); m != nil {
+		p.endList()
 		p.flush()
 		p.openHeading(&Heading{Level: len(m[1]), Title: parseInlines(strings.TrimSpace(m[2]))})
 		return
 	}
 	if strings.TrimSpace(line) == "" {
-		p.flush()
+		// A blank line does not end a list: org allows one inside, and what
+		// follows decides whether the list continues.
+		if !p.inList() {
+			p.flush()
+		}
 		return
 	}
+	if item, indent, ordered, ok := parseListItem(line); ok {
+		p.flush()
+		p.addListItem(indent, ordered, item)
+		return
+	}
+	if p.addContinuation(line) {
+		return
+	}
+	p.endList()
 	p.lines = append(p.lines, parseInlines(line))
 }
 

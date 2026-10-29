@@ -212,7 +212,7 @@ and tests passing.
 | 1 | ✅ `internal/org`: headings + paragraphs | parser produces the AST for a nested-heading document |
 | 2 | ✅ `internal/md`: headings + paragraphs, golden harness | first end-to-end snippet converts |
 | 3 | ✅ Inline phase: emphasis, code, links, timestamps (FR-5) | word-boundary rules hold; inline verbatim keeps its markers |
-| 4 | Lists, checkboxes, definition lists | nested mixed lists round-trip |
+| 4 | ✅ Lists, checkboxes, definition lists | nested mixed lists round-trip |
 | 5 | Blocks: src, example, quote, rules | language info string preserved; emphasis inside a src block provably untouched |
 | 6 | Tables and footnotes | GFM alignment row correct |
 | 7 | Frontmatter (FR-3) | title/date/tags/properties emitted, empty case omitted |
@@ -230,6 +230,11 @@ Steps 1–8 need no CLI and no filesystem, so the bulk of the tool is testable f
 2. **`:LOGBOOK:` and clock entries** — dropped in v1; worth a `--keep-drawers` flag later?
 3. **Multiple input files / directory mode** — out of scope for v1, but it is the obvious
    first subcommand and a reason Cobra was chosen.
+4. **Continuation text interleaved with a nested list** — `ListItem` keeps its own text in
+   `Lines` and its nested lists in `Children`, so an item holding both renders all of its
+   text before the nested list even when the source interleaved them. Fixing it means
+   modelling item content as one ordered `[]Node`, which also changes whether such an item
+   renders tight or loose. Rare enough to defer, common enough to write down.
 
 Resolved: scheduled/deadline dates render as plain text (no daily-note links — the vault
 does not use daily notes, so linking would only mint unresolved links), and `_underline_`
