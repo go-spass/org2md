@@ -221,7 +221,7 @@ and tests passing.
 | 6 | ✅ Tables and footnotes | GFM alignment row correct |
 | 7 | ✅ Frontmatter (FR-3), plus the warnings return for dropped drawers and unrecognized keywords | title/date/tags/properties emitted, empty case omitted |
 | 8 | ✅ Task metadata (FR-6), plus heading tags from FR-4 | TODO, priority, scheduled/deadline rendered |
-| 9 | `internal/vault` + CLI flags (FR-1, FR-2) | prompt, `-y`, `--no-move`, `--force`, `-o -` |
+| 9 | ✅ `internal/vault` + CLI flags (FR-1, FR-2) | prompt, `-y`, `--no-move`, `--force`, `-o -` |
 | 10 | End-to-end golden test on a real note; README refresh | realistic org file converts cleanly |
 
 Steps 1–8 need no CLI and no filesystem, so the bulk of the tool is testable from step 1.

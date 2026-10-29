@@ -10,10 +10,10 @@ the generated Markdown into `$MDNOTES_DIR/Inbox`.
 
 ## Repository state
 
-Scaffolded, conversion not yet written. `cmd/org2md` holds the Cobra root command and
-builds, but `RunE` returns `errNotImplemented`: the CLI is wired to the converter in step 9
-of the plan, along with the output-placement flags. `internal/org` parses headings and
-paragraphs, `internal/md` renders them, and `internal/vault` does not exist yet.
+Working end to end. `cmd/org2md` parses an org file, renders it, and places the result;
+`internal/org` parses, `internal/md` renders, `internal/vault` decides where the output goes
+and offers the `$MDNOTES_DIR/Inbox` move. Step 10 of the plan is the remaining work: an
+end-to-end test over a realistic note, and a README refresh.
 
 Run `make golden` to rewrite `internal/md/testdata/*.md` after an intended rendering change,
 and read the resulting diff before committing it.
