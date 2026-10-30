@@ -223,6 +223,7 @@ and tests passing.
 | 8 | ✅ Task metadata (FR-6), plus heading tags from FR-4 | TODO, priority, scheduled/deadline rendered |
 | 9 | ✅ `internal/vault` + CLI flags (FR-1, FR-2) | prompt, `-y`, `--no-move`, `--force`, `-o -` |
 | 10 | ✅ End-to-end golden test on a real note; README refresh | realistic org file converts cleanly |
+| 11 | ✅ Friendly no-argument run: examples in `--help`, bare `org2md` prints the help | `org2md` with no args prints usage, examples and flags on stdout and exits 0 |
 
 Steps 1–8 need no CLI and no filesystem, so the bulk of the tool is testable from step 1.
 

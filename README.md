@@ -29,6 +29,9 @@ With no `--output`, the Markdown is written beside the input file — `notes.org
 `notes.md`. If `MDNOTES_DIR` is set, `org2md` then asks whether to move it into
 `$MDNOTES_DIR/Inbox`.
 
+Run `org2md` with no arguments (or `org2md --help`) to print this usage, the flags below and
+worked examples.
+
 | Flag | Meaning |
 | --- | --- |
 | `-o, --output <path>` | Write here instead of beside the input. `-o -` writes to stdout and never moves the file. |

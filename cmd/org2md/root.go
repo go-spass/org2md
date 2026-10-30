@@ -41,10 +41,29 @@ func newRootCmd(b buildInfo) *cobra.Command {
 
 With no --output, the Markdown is written beside the input file. When %s is
 set, org2md then offers to move the result into $%s/Inbox.`, notesDirEnv, notesDirEnv),
-		Args:          cobra.ExactArgs(1),
+		Example: `  # Convert a note, writing capture.md beside it.
+  org2md capture.org
+
+  # Convert and file it in $` + notesDirEnv + `/Inbox without being asked.
+  org2md --yes capture.org
+
+  # Print the Markdown instead of writing a file.
+  org2md -o - capture.org | pbcopy
+
+  # Convert to a chosen path, replacing what is there.
+  org2md --force -o ~/vault/Inbox/note.md capture.org
+
+  # Show what could not be converted, and where it was written.
+  org2md --verbose capture.org`,
+		Args:          atMostOneFile,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// A bare org2md is a question, not a mistake: answer it with the
+			// help, which carries the flags and the examples.
+			if len(args) == 0 {
+				return cmd.Help()
+			}
 			return convert(cmd, args[0], &o)
 		},
 	}
@@ -60,6 +79,15 @@ set, org2md then offers to move the result into $%s/Inbox.`, notesDirEnv, notesD
 	cmd.SetVersionTemplate(fmt.Sprintf("org2md %s (commit %s, built %s)\n", b.version, b.commit, b.date))
 
 	return cmd
+}
+
+// atMostOneFile accepts the one input file org2md converts, or none at all so
+// that a bare run can print the help instead of an argument error.
+func atMostOneFile(cmd *cobra.Command, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("expected one org file, got %d; run %q for usage", len(args), cmd.CommandPath()+" --help")
+	}
+	return nil
 }
 
 func convert(cmd *cobra.Command, input string, o *options) error {
