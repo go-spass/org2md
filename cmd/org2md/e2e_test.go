@@ -68,6 +68,29 @@ func TestEndToEndStdout(t *testing.T) {
 	}
 }
 
+// TestEndToEndVersionWithoutStamping covers the build a user gets from
+// `go install`: no -ldflags, so --version has only Go's embedded build info to
+// work from. It reads this checkout's git data, so a -buildvcs=false build
+// would fail it.
+func TestEndToEndVersionWithoutStamping(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds the binary")
+	}
+	bin := build(t)
+
+	out, err := exec.Command(bin, "--version").CombinedOutput()
+	if err != nil {
+		t.Fatalf("org2md --version error = %v\n%s", err, out)
+	}
+
+	got := string(out)
+	for _, unstamped := range []string{"commit none", "built unknown"} {
+		if strings.Contains(got, unstamped) {
+			t.Errorf("--version = %q, want %q filled in from the embedded build info", got, unstamped)
+		}
+	}
+}
+
 // TestEndToEndFilesIntoTheInbox walks the path a capture actually takes:
 // convert beside the note, then move it into the vault.
 func TestEndToEndFilesIntoTheInbox(t *testing.T) {

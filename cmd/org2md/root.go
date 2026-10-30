@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -17,10 +18,53 @@ import (
 // notesDirEnv names the vault org2md offers to file converted notes into.
 const notesDirEnv = "MDNOTES_DIR"
 
+// The build information main reports when the linker stamped none: only the
+// Makefile passes -ldflags, so a `go install` or a plain `go build` starts here.
+const (
+	defaultVersion = "dev"
+	defaultCommit  = "none"
+	defaultDate    = "unknown"
+)
+
 type buildInfo struct {
 	version string
 	commit  string
 	date    string
+}
+
+// fill completes the fields the linker did not stamp from the build info Go
+// embeds in every binary: the module version a `go install module@version`
+// recorded, and the revision and time of the tree a build came from. Stamped
+// values always win, and info may be nil when there is no build info at all.
+func (b buildInfo) fill(info *debug.BuildInfo) buildInfo {
+	if info == nil {
+		return b
+	}
+
+	// A build outside a module release has no version to report, only the
+	// "(devel)" placeholder, which says less than "dev" does.
+	if b.version == defaultVersion && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		b.version = info.Main.Version
+	}
+
+	for _, setting := range info.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			if b.commit == defaultCommit {
+				// Match the short hash the Makefile stamps.
+				b.commit = setting.Value
+				if len(b.commit) > 7 {
+					b.commit = b.commit[:7]
+				}
+			}
+		case "vcs.time":
+			if b.date == defaultDate {
+				b.date = setting.Value
+			}
+		}
+	}
+
+	return b
 }
 
 type options struct {
