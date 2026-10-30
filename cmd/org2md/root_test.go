@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"testing"
 )
@@ -46,6 +47,56 @@ func readFile(t *testing.T, path string) string {
 		t.Fatalf("ReadFile(%q) error = %v", path, err)
 	}
 	return string(b)
+}
+
+// Only the Makefile stamps build information with -ldflags, so a `go install`
+// or a plain `go build` has to recover it from the build info Go embeds in
+// every binary rather than reporting "dev".
+func TestFillBuildInfo(t *testing.T) {
+	embedded := &debug.BuildInfo{
+		Main: debug.Module{Version: "v1.1.0"},
+		Settings: []debug.BuildSetting{
+			{Key: "vcs", Value: "git"},
+			{Key: "vcs.revision", Value: "12a2274b89fa528e8a4cc2f8f32b7e1fed6a3e60"},
+			{Key: "vcs.time", Value: "2026-10-29T04:23:26Z"},
+		},
+	}
+	unstamped := buildInfo{version: defaultVersion, commit: defaultCommit, date: defaultDate}
+
+	tests := []struct {
+		name string
+		in   buildInfo
+		info *debug.BuildInfo
+		want buildInfo
+	}{{
+		name: "embedded build info fills an unstamped build",
+		in:   unstamped,
+		info: embedded,
+		want: buildInfo{version: "v1.1.0", commit: "12a2274", date: "2026-10-29T04:23:26Z"},
+	}, {
+		name: "stamped values win",
+		in:   buildInfo{version: "v1.2.3", commit: "abc1234", date: "2026-10-28T00:00:00Z"},
+		info: embedded,
+		want: buildInfo{version: "v1.2.3", commit: "abc1234", date: "2026-10-28T00:00:00Z"},
+	}, {
+		name: "no build info leaves the defaults",
+		in:   unstamped,
+		info: nil,
+		want: unstamped,
+	}, {
+		name: "a version-less module leaves the default version",
+		in:   unstamped,
+		info: &debug.BuildInfo{Main: debug.Module{Version: "(devel)"}},
+		want: unstamped,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.in.fill(tt.info); got != tt.want {
+				t.Errorf("fill() = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestVersion(t *testing.T) {

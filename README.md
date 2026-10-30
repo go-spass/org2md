@@ -19,6 +19,10 @@ Or build from a clone, which puts the binary in `./bin`:
 make build
 ```
 
+Either way `--version` reports a real version: `make build` stamps it with `-ldflags`, and a
+`go install` build reads the module version and commit from the build information Go embeds
+in every binary.
+
 ## Usage
 
 ```sh
