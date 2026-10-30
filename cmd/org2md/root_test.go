@@ -77,21 +77,56 @@ func TestShortVIsVerbose(t *testing.T) {
 	}
 }
 
-func TestArgCount(t *testing.T) {
-	tests := []struct {
-		name string
-		args []string
-	}{
-		{name: "no arguments", args: nil},
-		{name: "two input files", args: []string{"a.org", "b.org"}},
+// A bare org2md is someone asking what the tool takes, not an error: the help
+// goes to stdout so it can be paged or grepped, and the run succeeds.
+func TestNoArgumentsPrintsHelp(t *testing.T) {
+	stdout, stderr, err := run(t, "")
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want the help and no error", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if _, _, err := run(t, "", tt.args...); err == nil {
-				t.Fatal("Execute() = nil, want an argument error")
-			}
-		})
+	wants := []string{
+		"org2md [flags] <file.org>",
+		"Examples:",
+		"org2md capture.org",
+		"--output",
+		"--force",
+		"--yes",
+		"--no-move",
+		"--verbose",
+		"--version",
+	}
+	for _, want := range wants {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("stdout is missing %q, got:\n%s", want, stdout)
+		}
+	}
+	if stderr != "" {
+		t.Errorf("stderr = %q, want the help on stdout alone", stderr)
+	}
+}
+
+func TestHelpShowsExamples(t *testing.T) {
+	stdout, _, err := run(t, "", "--help")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+	for _, want := range []string{"Examples:", "org2md capture.org", "-o - capture.org"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("--help output is missing %q, got:\n%s", want, stdout)
+		}
+	}
+}
+
+func TestTooManyArgumentsIsAnError(t *testing.T) {
+	_, _, err := run(t, "", "a.org", "b.org")
+	if err == nil {
+		t.Fatal("Execute() = nil, want an argument error")
+	}
+	for _, want := range []string{"one org file", "--help"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error = %q, want it to mention %q", err, want)
+		}
 	}
 }
 
