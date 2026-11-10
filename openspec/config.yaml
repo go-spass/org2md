@@ -1,32 +1,85 @@
 schema: spec-driven
 
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
+context: |
+  org2md is a Go CLI that converts an Emacs org-mode file into Markdown for an
+  Obsidian vault. Go 1.27, gofmt formatting, idiomatic error handling.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Planning: OpenSpec is the planning system for all new work. `docs/design.md` is
+  the frozen v1 design record — its FR-1 … FR-7 numbering and org → Markdown
+  mapping tables remain the reference for existing behavior, and its "Open
+  questions" section is the backlog new changes are drawn from, but no new plan
+  steps are added to it. Update it only when a change settles one of those
+  questions or contradicts a documented decision.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  Git: never commit to `main`. One branch and one PR per OpenSpec change, branch
+  prefix matching the conventional-commit type (`feat/`, `fix/`, `refactor/`,
+  `test/`, `docs/`, `chore/`). Do not roll two changes into one branch. Do not
+  commit unless asked, and never pass `--no-verify`.
+
+  Test-driven, without exception: the failing test is written first, watched fail,
+  then the minimum code to pass it, then refactor. No production code lands
+  without a test that drove it. A bug is reproduced as a failing test before the
+  fix is touched.
+
+  `make` is the interface for building and testing — use the Makefile targets
+  (`build`, `test`, `test-race`, `cover`, `vet`, `fmt`, `clean`, `install`)
+  rather than calling `go` directly. A single `go test -run TestName ./pkg` during
+  a red-green cycle is fine. If a target is missing, add it to the Makefile
+  instead of working around it. `make golden` rewrites the golden files in
+  `internal/md/testdata` and `cmd/org2md/testdata`; it builds the binary, and
+  `go test -short` skips the end-to-end tests that need one.
+
+  Architectural constraints a change must not break:
+  - Conversion is pure: `io.Reader` in, string out. `internal/org` and
+    `internal/md` touch neither the filesystem nor the environment. Anything
+    interactive or environment-dependent belongs in `internal/vault` or `main`.
+  - Parsing is line-oriented in two phases (blocks, then inlines). Inline markup
+    is never applied inside source/example/verbatim content — a bare `*` in a
+    shell snippet has to survive.
+  - `internal/org` owns org syntax; `internal/md` owns Obsidian conventions. A
+    construct with no Markdown equivalent is a rendering decision, not a parsing
+    one.
+  - Unrecognized org syntax passes through verbatim with a warning; it never
+    fails the run.
+  - `Render` returns `(string, []string)` — the Markdown and the warnings, in
+    document order. Anything org can say that Markdown cannot is reported rather
+    than dropped in silence, with `:LOGBOOK:` the one deliberate exception.
+  - Output placement: explicit `-o` wins; otherwise write beside the source and
+    offer the `$MDNOTES_DIR/Inbox` move. The target vault does not use daily
+    notes, so dates never render as links.
+
+  Tests are table-driven snippets per construct plus `testdata/` golden files for
+  whole documents. `internal/vault` tests use `t.TempDir()` and `t.Setenv`, with
+  the prompt reading from an injected `io.Reader`, so no test needs a TTY.
+
+rules:
+  proposal:
+    - State explicitly what is out of scope.
+    - Cite the FR number from docs/design.md that the change extends, or the
+      numbered open question it answers, when one applies.
+  specs:
+    - Write requirements as observable org input → Markdown output behavior, not
+      as parser or renderer internals.
+    - Give a scenario for the warning path whenever the behavior can warn, and for
+      content that must survive untransformed whenever the change touches inline
+      markup.
+  design:
+    - Name which package owns each part of the change (cmd/org2md, internal/org,
+      internal/md, internal/vault) and say how the purity boundary is preserved.
+    - Call out any change to the org → Markdown mapping tables in docs/design.md.
+  tasks:
+    - Order every pair red-green — the failing-test task comes before the task that
+      makes it pass.
+    - Include a `make golden` task, with a read of the resulting diff, whenever
+      rendering output changes.
+
+operations:
+  apply:
+    guidance:
+      - Run `make test` and `make vet` before marking a task complete.
+      - For a rendering change, run `make golden` and read the diff before
+        committing it.
+  archive:
+    guidance:
+      - Say which docs/design.md open question the change resolved, if any, and
+        update that section rather than leaving the code to drift from the spec.

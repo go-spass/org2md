@@ -14,18 +14,20 @@ v1 complete: every step of the plan in `docs/design.md` is done. `cmd/org2md` pa
 file, renders it, and places the result; `internal/org` parses, `internal/md` renders,
 `internal/vault` decides where the output goes and offers the `$MDNOTES_DIR/Inbox` move.
 
-Further work starts from the open questions at the end of `docs/design.md`. Add a plan step
-there before building, so the step-per-PR history stays readable.
+Further work is planned in OpenSpec, not in `docs/design.md` — see **Planning** below. The
+open questions at the end of `docs/design.md` are the backlog those changes are drawn from.
 
 Run `make golden` to rewrite the golden files in `internal/md/testdata` and
 `cmd/org2md/testdata` after an intended rendering change, and read the resulting diff before
 committing it. The `cmd` fixture is produced by the built binary, so `make golden` runs a
 build; `go test -short` skips the end-to-end tests that need one.
 
-`docs/design.md` is the spec: numbered functional requirements (FR-1 … FR-7), the org →
-Markdown mapping tables, the package design, and a step-by-step implementation plan whose
-table tracks which steps are done. Read it before writing code, and update it when a
-decision changes rather than letting the code drift from it.
+`docs/design.md` is the frozen v1 design record: numbered functional requirements
+(FR-1 … FR-7), the org → Markdown mapping tables, the package design, and the completed
+implementation plan. Read it before writing code — it is still the reference for how the
+tool behaves today. Do not add plan steps to it; update it when a change settles one of its
+open questions or contradicts a documented decision, rather than letting the code drift from
+it.
 
 Settled decisions:
 
@@ -45,30 +47,49 @@ them silently.
 make it pass, then refactor. No production code lands without a test that drove it. When
 fixing a bug, reproduce it as a failing test before touching the fix.
 
-**One branch and one PR per plan step.** Each numbered step in `docs/design.md` gets its
-own branch, its own PR, and a tick in the plan table when it merges. Do not roll two steps
-into one branch.
+**One branch and one PR per OpenSpec change.** Each change in `openspec/changes/` gets its
+own branch and its own PR, and is archived when it merges. Do not roll two changes into one
+branch.
 
 **Feature branches only.** Never commit to `main`. Branch first (`feat/...`, `fix/...`,
 `refactor/...`, `test/...`, `docs/...` matching the conventional-commit type), make the
 change there, and open a PR. If work has already started on `main`, move it to a branch
 before committing.
 
+## Planning
+
+Planning goes through OpenSpec (`openspec` CLI, `spec-driven` schema). `openspec/specs/`
+holds the capability specs — what the tool must do; `openspec/changes/` holds in-flight
+proposals; `openspec/config.yaml` carries the project context and the per-artifact rules
+that every proposal, spec, design, and task list must follow.
+
+The loop: `openspec propose` (or `/opsx:propose`) to turn a request into proposal, specs,
+design, and tasks → `openspec apply` to implement them red-green → `openspec archive` when
+the PR merges. `openspec explore` first when the shape of the work is still unclear.
+`openspec list --specs` is the capability inventory; read it before naming a new capability
+so deltas modify existing specs rather than minting near-duplicates.
+
+Proposals are planning only. Do not edit code in the same step that writes the artifacts —
+wait for the apply step.
+
 ## Commands
 
 Go 1.27 (`go version go1.27.3 darwin/arm64`).
 
 `make` is the interface for building and testing — always use the Makefile targets rather
-than calling `go` directly. The Makefile does not exist yet; creating it is part of the
-initial scaffolding, and it should wrap at least:
+than calling `go` directly:
 
 ```sh
+make all            # vet, test, then build
 make build          # build the org2md binary
+make install        # install the binary
 make test           # go test ./...
 make test-race      # go test -race ./...
+make golden         # rewrite the golden files, then read the diff
 make cover          # go test -cover ./...
 make vet            # go vet ./...
 make fmt            # gofmt -w .
+make check          # vet, then test
 make clean
 ```
 
