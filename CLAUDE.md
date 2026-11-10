@@ -43,13 +43,18 @@ them silently.
 
 ## Workflow
 
-**Test-driven.** Write the failing test first, watch it fail, then write the minimum code to
-make it pass, then refactor. No production code lands without a test that drove it. When
-fixing a bug, reproduce it as a failing test before touching the fix.
+**Test-driven, without exception.** Write the failing test first, run it, and report that it
+failed before writing a line of production code. Then the minimum code to make it pass, then
+refactor. No production code lands without a test that drove it. When fixing a bug,
+reproduce it as a failing test before touching the fix. If a piece of production code cannot
+be driven by a test, stop and say so rather than writing it.
 
-**One branch and one PR per OpenSpec change.** Each change in `openspec/changes/` gets its
-own branch and its own PR, and is archived when it merges. Do not roll two changes into one
-branch.
+**One branch and one PR per task.** Each task in a change's `tasks.md` gets its own branch,
+cut fresh from `main`, and its own pull request. Never carry a second task onto a branch that
+already holds one. Because a task is its own PR, the whole red-green-refactor cycle happens
+inside it — the failing test and the code that satisfies it land together, never split across
+two PRs. Tasks are sized to be independently shippable, so `main` builds and passes its tests
+at every merge. The change itself is archived once its tasks have merged.
 
 **Feature branches only.** Never commit to `main`. Branch first (`feat/...`, `fix/...`,
 `refactor/...`, `test/...`, `docs/...` matching the conventional-commit type), make the
