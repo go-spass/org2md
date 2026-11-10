@@ -11,15 +11,20 @@ context: |
   steps are added to it. Update it only when a change settles one of those
   questions or contradicts a documented decision.
 
-  Git: never commit to `main`. One branch and one PR per OpenSpec change, branch
-  prefix matching the conventional-commit type (`feat/`, `fix/`, `refactor/`,
-  `test/`, `docs/`, `chore/`). Do not roll two changes into one branch. Do not
-  commit unless asked, and never pass `--no-verify`.
+  Git: never commit to `main`. Every task in a change's `tasks.md` gets its own
+  branch and its own pull request, with a branch prefix matching the
+  conventional-commit type (`feat/`, `fix/`, `refactor/`, `test/`, `docs/`,
+  `chore/`). Never implement two tasks on one branch, and never reopen a merged
+  task's branch to carry the next one. `main` must build and pass its tests at
+  every merge, so a task is sized to be independently shippable. Do not commit
+  unless asked, and never pass `--no-verify`.
 
-  Test-driven, without exception: the failing test is written first, watched fail,
-  then the minimum code to pass it, then refactor. No production code lands
+  Test-driven, without exception: the failing test is written first and watched
+  fail, then the minimum code to pass it, then refactor. No production code lands
   without a test that drove it. A bug is reproduced as a failing test before the
-  fix is touched.
+  fix is touched. Because each task is its own pull request, the whole
+  red-green-refactor cycle happens inside one task — the test and the code that
+  satisfies it land together, never split across two pull requests.
 
   `make` is the interface for building and testing — use the Makefile targets
   (`build`, `test`, `test-race`, `cover`, `vet`, `fmt`, `clean`, `install`)
@@ -68,17 +73,40 @@ rules:
       internal/md, internal/vault) and say how the purity boundary is preserved.
     - Call out any change to the org → Markdown mapping tables in docs/design.md.
   tasks:
-    - Order every pair red-green — the failing-test task comes before the task that
-      makes it pass.
-    - Include a `make golden` task, with a read of the resulting diff, whenever
-      rendering output changes.
+    - Keep tasks independently shippable — each one must be mergeable into a
+      green `main` on its own, because each one becomes its own branch and pull
+      request.
+    - Name the failing test that drives each task, and the package it lives in, so
+      the red step is unambiguous before any production code is written.
+    - Reject any task that would land production code with no test driving it.
+      Split it into a task that can be driven by a test, or state in the task why
+      no behavior changed.
+    - Give each task its branch name, prefixed with the conventional-commit type
+      the work carries.
+    - Carry the whole red-green-refactor cycle inside a single task. Never split
+      the failing test and the code that satisfies it across two tasks.
+    - Include a `make golden` step, with a read of the resulting diff, in any task
+      whose rendering output changes.
 
 operations:
   apply:
     guidance:
-      - Run `make test` and `make vet` before marking a task complete.
+      - Work one task at a time. Before touching anything, cut that task's branch
+        from an up-to-date `main`, using the branch name the task names.
+      - Write that task's failing test first and run it. Report that it failed,
+        and what it failed with, before writing a line of production code.
+      - Then write the minimum code that makes it pass, run the test again, and
+        only then refactor.
+      - Run `make check` (vet, then test) before marking a task complete, and
+        `make test-race` when the task touches concurrency.
       - For a rendering change, run `make golden` and read the diff before
         committing it.
+      - Finish a task with its own pull request, then return to `main` for the
+        next task. Never carry a second task onto a branch that already holds one,
+        and never let a task land without the test that drove it.
+      - If a task turns out to need production code that no test can drive, stop
+        and say so rather than writing it. That is a sign the task or the spec is
+        wrong.
   archive:
     guidance:
       - Say which docs/design.md open question the change resolved, if any, and
