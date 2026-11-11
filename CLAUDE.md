@@ -10,24 +10,30 @@ the generated Markdown into `$MDNOTES_INBOX`, which names the destination direct
 
 ## Repository state
 
-v1 complete: every step of the plan in `docs/design.md` is done. `cmd/org2md` parses an org
-file, renders it, and places the result; `internal/org` parses, `internal/md` renders,
-`internal/vault` decides where the output goes and offers the `$MDNOTES_INBOX` move.
+Released at v2.0.0. Every step of the v1 plan in `docs/design.md` is done, and one change
+has shipped on top of it: `$MDNOTES_DIR/Inbox` became `$MDNOTES_INBOX`, which must name an
+existing directory. `cmd/org2md` parses an org file, renders it, and places the result;
+`internal/org` parses, `internal/md` renders, `internal/vault` decides where the output goes
+and offers the `$MDNOTES_INBOX` move.
 
 Further work is planned in OpenSpec, not in `docs/design.md` — see **Planning** below. The
 open questions at the end of `docs/design.md` are the backlog those changes are drawn from.
+What has shipped since v1 is in `openspec/changes/archive/`, one directory per change, each
+holding the proposal and design that argued for it. Read the relevant one before reopening a
+decision it settled.
 
 Run `make golden` to rewrite the golden files in `internal/md/testdata` and
 `cmd/org2md/testdata` after an intended rendering change, and read the resulting diff before
 committing it. The `cmd` fixture is produced by the built binary, so `make golden` runs a
 build; `go test -short` skips the end-to-end tests that need one.
 
-`docs/design.md` is the frozen v1 design record: numbered functional requirements
-(FR-1 … FR-7), the org → Markdown mapping tables, the package design, and the completed
-implementation plan. Read it before writing code — it is still the reference for how the
-tool behaves today. Do not add plan steps to it; update it when a change settles one of its
-open questions or contradicts a documented decision, rather than letting the code drift from
-it.
+`docs/design.md` is the v1 design record: numbered functional requirements (FR-1 … FR-7),
+the org → Markdown mapping tables, the package design, and the completed implementation plan.
+Read it before writing code — it is still the reference for how the tool behaves today, and
+it is kept that way rather than left frozen. FR-2 has been amended twice by the
+`$MDNOTES_INBOX` change, so it describes v2 behavior, not the v1 behavior originally written
+there. Do not add plan steps to it; update it when a change settles one of its open questions
+or contradicts a documented decision, rather than letting the code drift from it.
 
 Settled decisions:
 
@@ -35,7 +41,9 @@ Settled decisions:
 - `cmd/org2md/` for CLI wiring, `internal/org` (parser), `internal/md` (renderer),
   `internal/vault` (output placement and the `MDNOTES_INBOX` move)
 - `spf13/cobra` for the CLI
-- v1 scope: core org syntax + YAML frontmatter + task metadata
+- Conversion scope: core org syntax + YAML frontmatter + task metadata. Set in v1 and
+  unchanged since — v2.0.0 altered output placement only, and no org construct renders
+  differently.
 - Output: explicit `-o` wins; otherwise write beside the source and offer the move
 
 The open items are listed at the end of `docs/design.md` — raise them rather than deciding
@@ -116,5 +124,8 @@ Makefile instead of working around it.
   Anything org can say that Markdown cannot is reported rather than dropped in silence, with
   `:LOGBOOK:` the one deliberate exception.
 - Tests are table-driven snippets per construct, plus `testdata/` golden files for whole
-  documents. `internal/vault` uses `t.TempDir()` and `t.Setenv`, with the prompt reading from
-  an injected `io.Reader` so no test needs a TTY.
+  documents. `internal/vault` uses `t.TempDir()` and takes the inbox as a `Placer` field
+  rather than from the environment, with the prompt reading from an injected `io.Reader` so
+  no test needs a TTY. `cmd/org2md`, which does read the environment, unsets the inbox
+  variables in `TestMain`: a developer's own shell has one exported, and a test must never
+  reach a real vault.
