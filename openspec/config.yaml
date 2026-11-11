@@ -50,12 +50,17 @@ context: |
     document order. Anything org can say that Markdown cannot is reported rather
     than dropped in silence, with `:LOGBOOK:` the one deliberate exception.
   - Output placement: explicit `-o` wins; otherwise write beside the source and
-    offer the `$MDNOTES_DIR/Inbox` move. The target vault does not use daily
-    notes, so dates never render as links.
+    offer the `$MDNOTES_INBOX` move. That variable names the destination
+    directory itself, must already exist, and is checked before anything is
+    written. The target vault does not use daily notes, so dates never render as
+    links.
 
   Tests are table-driven snippets per construct plus `testdata/` golden files for
-  whole documents. `internal/vault` tests use `t.TempDir()` and `t.Setenv`, with
-  the prompt reading from an injected `io.Reader`, so no test needs a TTY.
+  whole documents. `internal/vault` tests use `t.TempDir()` and take the inbox as
+  a `Placer` field rather than from the environment, with the prompt reading from
+  an injected `io.Reader`, so no test needs a TTY. `cmd/org2md`, which does read
+  the environment, unsets the inbox variables in `TestMain`: a developer's own
+  shell has one exported, and a test must never reach a real vault.
 
 rules:
   proposal:

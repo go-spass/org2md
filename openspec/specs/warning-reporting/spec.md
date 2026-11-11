@@ -8,12 +8,19 @@ in silence. Derived from FR-7 in `docs/design.md`.
 ## Requirements
 
 ### Requirement: Fatal conditions write nothing
-Missing or unreadable input, a bad argument count, or an existing output without `--force`
-SHALL exit non-zero with a message on stderr and SHALL leave no file written.
+Missing or unreadable input, a bad argument count, an existing output without `--force`, or a
+configured `$MDNOTES_INBOX` that is not an existing directory SHALL exit non-zero with a
+message on stderr and SHALL leave no file written.
 
 #### Scenario: Unreadable input
 - **WHEN** `org2md missing.org` runs and the file does not exist
 - **THEN** a message goes to stderr, no file is written, and the exit status is non-zero
+
+#### Scenario: Unusable inbox
+- **WHEN** `MDNOTES_INBOX` names a path that is not an existing directory and
+  `org2md capture.org` runs
+- **THEN** a message naming that path goes to stderr, no file is written, and the exit status
+  is non-zero
 
 ### Requirement: Unrecognized syntax never fails the run
 Org syntax org2md does not recognize SHALL NOT fail the conversion: the run succeeds, the
