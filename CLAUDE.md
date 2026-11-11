@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+It is the authoritative record of this project's conventions and constraints. `docs/design.md`
+is authoritative for *behavior* — the functional requirements and the org → Markdown mapping
+tables. `openspec/config.yaml` deliberately restates neither: it points here, and carries only
+the per-artifact rules that govern proposals, specs, designs, and task lists. Change a
+convention here, not in two places.
+
 ## Project
 
 `org2md` is a Go CLI that converts an Emacs org-mode file into a Markdown file suitable
@@ -44,7 +50,12 @@ Settled decisions:
 - Conversion scope: core org syntax + YAML frontmatter + task metadata. Set in v1 and
   unchanged since — v1.2.0 altered output placement only, and no org construct renders
   differently.
-- Output: explicit `-o` wins; otherwise write beside the source and offer the move
+- Output: explicit `-o` wins; otherwise write beside the source and offer the move.
+  The target vault does not use daily notes, so dates never render as links.
+- One file per invocation. No bulk, batch, or directory mode, and no multi-file subcommand.
+  org2md is used surgically: a rough note captured in org-mode is converted when it is ready
+  for a more formal place in the vault. Issue #14 closed on this, and it retires `docs/design.md`
+  open question 3, which had called a directory mode "the obvious first subcommand".
 - Versioning stays in the 1.x series, and a breaking CLI change does not bump the major.
   org2md is a command, not a library: everything importable lives under `internal/`, which
   Go forbids anyone outside this module from importing, so there is no public Go API for a
@@ -80,6 +91,8 @@ at every merge. The change itself is archived once its tasks have merged.
 `refactor/...`, `test/...`, `docs/...` matching the conventional-commit type), make the
 change there, and open a PR. If work has already started on `main`, move it to a branch
 before committing.
+
+Do not commit unless asked, and never pass `--no-verify`.
 
 ## Planning
 
