@@ -333,6 +333,9 @@ func TestMovesIntoTheInbox(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := orgFile(t)
 			inbox := filepath.Join(filepath.Dir(input), "vault", "00 - Inbox")
+			if err := os.MkdirAll(inbox, 0o755); err != nil {
+				t.Fatalf("MkdirAll() error = %v", err)
+			}
 			t.Setenv("MDNOTES_INBOX", inbox)
 
 			args := append(tt.args, input)
