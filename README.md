@@ -4,8 +4,8 @@ Go CLI that converts Emacs org-mode files to Markdown for an Obsidian vault.
 
 `org2md` reads an org file and writes a Markdown file that an Obsidian vault can use
 directly: org metadata becomes YAML frontmatter, `TODO` keywords and org tags become
-Obsidian tags, and links between org files become wikilinks. When `MDNOTES_DIR` is set, it
-offers to file the result in `$MDNOTES_DIR/Inbox`.
+Obsidian tags, and links between org files become wikilinks. When `MDNOTES_INBOX` is set, it
+offers to file the result there.
 
 ## Install
 
@@ -30,8 +30,9 @@ org2md [flags] <file.org>
 ```
 
 With no `--output`, the Markdown is written beside the input file — `notes.org` becomes
-`notes.md`. If `MDNOTES_DIR` is set, `org2md` then asks whether to move it into
-`$MDNOTES_DIR/Inbox`.
+`notes.md`. If `MDNOTES_INBOX` is set, `org2md` then asks whether to move it into
+`$MDNOTES_INBOX`. The variable names the destination directory itself; nothing is appended to
+it, so a vault that calls its capture folder `00 - Inbox` is spelled out in full.
 
 Run `org2md` with no arguments (or `org2md --help`) to print this usage, the flags below and
 worked examples.
@@ -41,7 +42,7 @@ worked examples.
 | `-o, --output <path>` | Write here instead of beside the input. `-o -` writes to stdout and never moves the file. |
 | `--force` | Overwrite an existing file. Without it, an existing destination is an error and nothing is written. |
 | `-y, --yes` | Answer yes to the move prompt. |
-| `--no-move` | Never move into `$MDNOTES_DIR/Inbox`. |
+| `--no-move` | Never move into `$MDNOTES_INBOX`. |
 | `-v, --verbose` | Report each conversion warning and the path written. |
 | `--version` | Version, commit and build date. |
 

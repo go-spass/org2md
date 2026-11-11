@@ -6,7 +6,7 @@ open are collected in [Open questions](#open-questions).
 ## 1. Purpose
 
 `org2md` converts a single Emacs org-mode file into a Markdown file suited to an Obsidian
-vault. When `MDNOTES_DIR` is set, it offers to move the result into `$MDNOTES_DIR/Inbox`.
+vault. When `MDNOTES_INBOX` is set, it offers to move the result into `$MDNOTES_INBOX`.
 
 ## 2. Settled decisions
 
@@ -33,7 +33,7 @@ org2md [flags] <file.org>
 - `-o, --output <path>` — write here instead of the default location. `-o -` writes to stdout.
 - `--force` — overwrite an existing output file (without it, an existing file is an error).
 - `-y, --yes` — assume yes to the move prompt; makes the tool safe for scripts and CI.
-- `--no-move` — never move, even when `MDNOTES_DIR` is set.
+- `--no-move` — never move, even when `MDNOTES_INBOX` is set.
 - `-v, --verbose` — report conversion warnings and the final path on stderr.
 - `--version` — version, commit, and build date.
 
@@ -43,8 +43,9 @@ Resolution order:
 
 1. `-o <path>` given → write exactly there. No prompt, no move.
 2. No `-o` → write `<input-basename>.md` beside the input file, then:
-   - `MDNOTES_DIR` set and `--no-move` absent → offer to move it to `$MDNOTES_DIR/Inbox/`
-     (`-y` accepts without asking; a non-TTY stdin declines without asking).
+   - `MDNOTES_INBOX` set and `--no-move` absent → offer to move it to `$MDNOTES_INBOX/`
+     (`-y` accepts without asking; a non-TTY stdin declines without asking). The variable
+     names the destination directory itself: no subdirectory is appended to it.
    - otherwise → leave it beside the input.
 3. Moving into a path that already exists is refused unless `--force`.
 
@@ -155,7 +156,7 @@ keeps the whole of FR-3 through FR-6 unit-testable without touching disk.
 | `cmd/org2md` | Cobra root command, flag definitions, exit codes, wiring |
 | `internal/org` | org source → AST; owns all org syntax knowledge |
 | `internal/md` | AST → Markdown + frontmatter; owns all Obsidian conventions |
-| `internal/vault` | `MDNOTES_DIR` resolution, output path choice, prompt, move |
+| `internal/vault` | `MDNOTES_INBOX` resolution, output path choice, prompt, move |
 
 Splitting `org` from `md` keeps the two dialects independent — an org construct with no
 Markdown equivalent is a rendering decision, not a parsing one, and a second output format
@@ -196,8 +197,11 @@ type Document struct {
 - Table-driven unit tests per construct in `internal/org` and `internal/md` — the common
   case is a short org snippet and its expected Markdown.
 - Golden files in `testdata/` for whole documents, refreshable with a `-update` flag.
-- `internal/vault` tested against `t.TempDir()` with `MDNOTES_DIR` set via `t.Setenv`; the
-  prompt reads from an injected `io.Reader` so the move logic needs no TTY.
+- `internal/vault` tested against `t.TempDir()`, with the inbox supplied as a `Placer` field
+  rather than read from the environment; the prompt reads from an injected `io.Reader` so the
+  move logic needs no TTY. `cmd/org2md`, which does read the environment, unsets
+  `MDNOTES_INBOX` (and the v1 variable it replaced) in `TestMain` so no test can inherit a
+  real vault.
 - One end-to-end test that runs the built binary over a realistic org note.
 
 ### Makefile

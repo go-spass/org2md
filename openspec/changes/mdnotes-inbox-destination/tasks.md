@@ -21,7 +21,7 @@ below.
   `notesDirEnv` to `MDNOTES_INBOX` in `root.go` along with the long description, the examples,
   and the `--no-move` flag help, dropping the `/Inbox` suffix from each. Verify with
   `make check` and that `grep -rn MDNOTES_DIR --include='*.go' .` returns nothing.
-- [ ] 1.2 Branch `docs/mdnotes-inbox-env`, immediately after 1.1 merges. Documentation for the
+- [x] 1.2 Branch `docs/mdnotes-inbox-env`, immediately after 1.1 merges. Documentation for the
   work 1.1 landed, so no test drives it and no behavior changes: update `README.md` lines 7-8,
   33-34, and the `--no-move` row at 44; `CLAUDE.md` lines 8-9, 15, and 36; and `docs/design.md`
   FR-2's resolution order, the `--no-move` bullet at line 36, and the `internal/vault` row of
