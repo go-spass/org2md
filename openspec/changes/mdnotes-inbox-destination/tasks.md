@@ -54,14 +54,23 @@ below.
 
 ## 3. Integration
 
-- [ ] 3.1 Branch `test/mdnotes-inbox-end-to-end`. Prove the whole path against the real vault
-  rather than a `t.TempDir()`: with `MDNOTES_INBOX="$HOME/Documents/second-brain/00 - Inbox"`,
-  run `org2md --yes` on a throwaway capture and confirm the note lands in `00 - Inbox/` and
-  that no `Inbox/` directory appears at the vault root — the exact reproduction in issue #13.
-  Then confirm the error path with a deliberately misspelled `MDNOTES_INBOX`, checking that the
-  run exits non-zero, writes no Markdown beside the input, and creates no directory. Add
-  whatever of this is automatable to `cmd/org2md/e2e_test.go` and verify with `make check`,
-  `make test-race`, and `make cover`.
+- [x] 3.1 Branch `test/mdnotes-inbox-end-to-end`. Prove the whole path through the built
+  binary, against a scratch vault under `t.TempDir()` shaped like a PARA one — a
+  `second-brain/00 - Inbox`. Run `--yes` on a throwaway capture and confirm the note lands in
+  `00 - Inbox/`, that no `Inbox/` directory appears at the vault root, and that the root holds
+  the capture folder and nothing else — the exact reproduction in issue #13. Then confirm the
+  error path with a deliberately misspelled `MDNOTES_INBOX`, checking that the run exits
+  non-zero, names the configured path, writes no Markdown beside the input, creates no
+  directory, and leaves the real inbox empty. Both go in `cmd/org2md/e2e_test.go`. Because the
+  code these assert already landed in tasks 1.1 and 2.1, there is no production code for them
+  to drive: prove they are not vacuous by reintroducing each bug in turn and watching them
+  fail. Verify with `make check`, `make test-race`, and `make cover`.
+
+  Revised 2026-11-11, replacing an instruction to run against the author's own vault at
+  `$HOME/Documents/second-brain/00 - Inbox`. A test may not depend on one machine's vault:
+  it cannot run anywhere else, and in a public repo it hard-codes a personal path into the
+  suite. Earlier in this change an ambient `$MDNOTES_DIR` leaked into a test run and wrote
+  fixtures into that vault, which is the same hazard from the other direction.
 
 ## Workflow follow-up
 
