@@ -68,9 +68,11 @@ is what this change deletes; it becomes a test that a non-directory inbox errors
 Affected docs: `README.md` (4 places), `CLAUDE.md` (3 places), and `docs/design.md` FR-2 and
 its package table.
 
-Breaking for anyone with `$MDNOTES_DIR` set, which is why this is worth doing now: the repo is
-private and both releases are source-only, so the cost is one line in a shell profile. Issue
-#15 (whether this repo goes public) closes that window. Semver puts this at v2.0.0.
+Breaking for anyone with `$MDNOTES_DIR` set, which is why this is worth doing now: the repo
+went public on 2026-11-11 (issue #15), but with no stars, forks, or dependents, and both
+releases are source-only, so the only configuration that breaks is this machine's and the cost
+is one line in a shell profile. Going public did not close that window — the first user does.
+Semver puts this at v2.0.0.
 
 ## Out of scope
 

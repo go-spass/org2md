@@ -77,9 +77,10 @@ non-absolute paths would add a rule whose only remaining job is to editorialize.
   Markdown at least landed beside the input → the error names the configured path, so the fix
   is one shell line and a rerun; conversion is fast, and `--no-move`, `-o`, or `-o -` all
   bypass the check if the output is wanted immediately.
-- **Breaking for anyone with `$MDNOTES_DIR` set** → the repo is private and both releases are
-  source-only, so the blast radius is one shell profile; ship as v2.0.0 with the README and
-  `--help` updated. Issue #15 closes this window.
+- **Breaking for anyone with `$MDNOTES_DIR` set** → the repo is public as of 2026-11-11 but
+  has no stars, forks, or dependents, and both releases are source-only, so the blast radius
+  is still one shell profile; ship as v2.0.0 with the README and `--help` updated. Visibility
+  did not close this window, but it is now open to whoever installs first.
 - **A genuinely fresh vault no longer gets its inbox created for it** → one `mkdir -p`, and
   the error message names the path that is missing. Trading a convenience that fires once for
   a failure mode that fires on every typo is the right way round.
