@@ -24,7 +24,14 @@ func newFixture(t *testing.T) fixture {
 	// The inbox name ends in "Inbox" on purpose: if Placer ever appends a
 	// subdirectory again, the target becomes .../Inbox/Inbox/note.md and the
 	// move assertions below catch it.
-	return fixture{dir: dir, input: input, inboxDir: filepath.Join(dir, "vault", "Inbox")}
+	inboxDir := filepath.Join(dir, "vault", "Inbox")
+	// org2md files into a vault it does not create, so the inbox has to exist
+	// before a move is offered. Tests about an inbox that does not exist build
+	// their own path instead of using this one.
+	if err := os.MkdirAll(inboxDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	return fixture{dir: dir, input: input, inboxDir: inboxDir}
 }
 
 func readFile(t *testing.T, path string) string {
@@ -198,6 +205,9 @@ func TestPlaceMovesIntoInbox(t *testing.T) {
 func TestPlaceMovesIntoAnInboxWithSpaces(t *testing.T) {
 	f := newFixture(t)
 	inboxDir := filepath.Join(f.dir, "second-brain", "00 - Inbox")
+	if err := os.MkdirAll(inboxDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
 	p := &Placer{InboxDir: inboxDir, Yes: true}
 
 	path, err := p.Place(f.input, "", "# Heading\n")
@@ -214,6 +224,117 @@ func TestPlaceMovesIntoAnInboxWithSpaces(t *testing.T) {
 	}
 	if _, err := os.Stat(MarkdownPath(f.input)); !os.IsNotExist(err) {
 		t.Error("Place() left the file beside the input after moving it")
+	}
+}
+
+// A configured inbox that org2md cannot file into is fatal, and fatal means
+// nothing was written: the check runs before the beside-the-input write, so a
+// typo in the variable costs a rerun rather than a stray file and an invented
+// directory tree.
+func TestPlaceRefusesAMissingInbox(t *testing.T) {
+	f := newFixture(t)
+	missing := filepath.Join(f.dir, "second-brain", "00 - Inbx")
+	p := &Placer{InboxDir: missing, Yes: true}
+
+	path, err := p.Place(f.input, "", "# Heading\n")
+	if err == nil {
+		t.Fatal("Place() error = nil, want a missing-inbox error")
+	}
+	if !strings.Contains(err.Error(), missing) {
+		t.Errorf("Place() error = %q, want it to name %q", err, missing)
+	}
+	if path != "" {
+		t.Errorf("Place() path = %q, want empty when nothing was written", path)
+	}
+	if _, err := os.Stat(missing); !os.IsNotExist(err) {
+		t.Errorf("Place() created %q; org2md files into a vault, it does not reshape one", missing)
+	}
+}
+
+func TestPlaceRefusesANonDirectoryInbox(t *testing.T) {
+	f := newFixture(t)
+	blocked := filepath.Join(f.dir, "blocked")
+	if err := os.WriteFile(blocked, []byte("not a directory\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	p := &Placer{InboxDir: blocked, Yes: true}
+	path, err := p.Place(f.input, "", "# Heading\n")
+	if err == nil {
+		t.Fatal("Place() error = nil, want a not-a-directory error")
+	}
+	if !strings.Contains(err.Error(), blocked) {
+		t.Errorf("Place() error = %q, want it to name %q", err, blocked)
+	}
+	if path != "" {
+		t.Errorf("Place() path = %q, want empty when nothing was written", path)
+	}
+	if got := readFile(t, blocked); got != "not a directory\n" {
+		t.Errorf("file at the inbox path = %q, want it untouched", got)
+	}
+}
+
+func TestPlaceLeavesNothingBehindWhenTheInboxIsMissing(t *testing.T) {
+	f := newFixture(t)
+	p := &Placer{InboxDir: filepath.Join(f.dir, "absent"), Yes: true}
+
+	if _, err := p.Place(f.input, "", "# Heading\n"); err == nil {
+		t.Fatal("Place() error = nil, want a missing-inbox error")
+	}
+	if _, err := os.Stat(MarkdownPath(f.input)); !os.IsNotExist(err) {
+		t.Error("Place() left the Markdown beside the input; a fatal condition writes nothing")
+	}
+}
+
+func TestPlaceDoesNotAskWhenTheInboxIsUnusable(t *testing.T) {
+	f := newFixture(t)
+	var prompt strings.Builder
+	p := &Placer{
+		InboxDir: filepath.Join(f.dir, "absent"),
+		Prompt:   &prompt,
+		Answers:  strings.NewReader("y\n"),
+	}
+
+	if _, err := p.Place(f.input, "", "# Heading\n"); err == nil {
+		t.Fatal("Place() error = nil, want a missing-inbox error")
+	}
+	if prompt.Len() != 0 {
+		t.Errorf("prompt = %q, want no question asked for a destination that cannot be honored", prompt.String())
+	}
+}
+
+// The check is gated on a move actually being in play, so a run that was never
+// going to touch the inbox is unaffected by a bad value.
+func TestPlaceIgnoresAnUnusableInboxWithoutAMove(t *testing.T) {
+	tests := []struct {
+		name   string
+		output string
+		noMove bool
+	}{
+		{name: "explicit output", output: "chosen.md"},
+		{name: "stdout", output: "-"},
+		{name: "no-move", noMove: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFixture(t)
+			var out strings.Builder
+			output := tt.output
+			if output != "" && output != "-" {
+				output = filepath.Join(f.dir, output)
+			}
+
+			p := &Placer{
+				InboxDir: filepath.Join(f.dir, "absent"),
+				NoMove:   tt.noMove,
+				Yes:      true,
+				Stdout:   &out,
+			}
+			if _, err := p.Place(f.input, output, "# Heading\n"); err != nil {
+				t.Fatalf("Place() error = %v, want an unusable inbox to be irrelevant here", err)
+			}
+		})
 	}
 }
 
@@ -237,9 +358,6 @@ func TestPlaceCannotAskWithoutAnswers(t *testing.T) {
 func TestPlaceRefusesToOverwriteInInbox(t *testing.T) {
 	f := newFixture(t)
 	inbox := f.inboxDir
-	if err := os.MkdirAll(inbox, 0o755); err != nil {
-		t.Fatalf("MkdirAll() error = %v", err)
-	}
 	existing := filepath.Join(inbox, "note.md")
 	if err := os.WriteFile(existing, []byte("old\n"), 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
@@ -312,25 +430,6 @@ func TestCopyFileReportsAMissingSource(t *testing.T) {
 	dir := t.TempDir()
 	if err := copyFile(filepath.Join(dir, "absent.md"), filepath.Join(dir, "to.md")); err == nil {
 		t.Fatal("copyFile() error = nil, want a missing-source error")
-	}
-}
-
-func TestMoveReportsAnUncreatableInbox(t *testing.T) {
-	f := newFixture(t)
-	// A regular file where the inbox should be: nothing can be created under
-	// it.
-	blocked := filepath.Join(f.dir, "blocked")
-	if err := os.WriteFile(blocked, []byte("not a directory\n"), 0o644); err != nil {
-		t.Fatalf("WriteFile() error = %v", err)
-	}
-
-	p := &Placer{InboxDir: blocked, Yes: true}
-	path, err := p.Place(f.input, "", "# Heading\n")
-	if err == nil {
-		t.Fatal("Place() error = nil, want a directory error")
-	}
-	if want := MarkdownPath(f.input); path != want {
-		t.Errorf("Place() path = %q, want the file it did write, %q", path, want)
 	}
 }
 

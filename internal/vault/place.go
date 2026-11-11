@@ -4,8 +4,10 @@ package vault
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,6 +40,9 @@ type Placer struct {
 // An explicit output path is final: no prompt and no move. With no output path
 // the Markdown is written beside the input, and is then offered to the inbox
 // if there is one.
+//
+// A configured inbox is checked before anything is written, so an inbox that
+// cannot be filed into fails the run without leaving a file behind.
 func (p *Placer) Place(input, output, content string) (string, error) {
 	if output == "-" {
 		_, err := io.WriteString(p.Stdout, content)
@@ -48,6 +53,14 @@ func (p *Placer) Place(input, output, content string) (string, error) {
 			return "", err
 		}
 		return output, nil
+	}
+
+	// Only a run that may actually move looks at the inbox, so -o, -o - and
+	// --no-move are unaffected by a bad value.
+	if p.InboxDir != "" && !p.NoMove {
+		if err := p.checkInbox(); err != nil {
+			return "", err
+		}
 	}
 
 	beside := MarkdownPath(input)
@@ -78,6 +91,22 @@ func (p *Placer) inboxPath(written string) (string, bool) {
 		return "", false
 	}
 	return filepath.Join(p.InboxDir, filepath.Base(written)), true
+}
+
+// checkInbox refuses a destination org2md cannot file into. The inbox belongs
+// to a vault this tool does not own, so a path that is missing is a
+// misconfiguration to report rather than a directory to invent.
+func (p *Placer) checkInbox() error {
+	info, err := os.Stat(p.InboxDir)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return fmt.Errorf("inbox %s does not exist; org2md does not create it", p.InboxDir)
+	case err != nil:
+		return fmt.Errorf("inbox %s cannot be read: %w", p.InboxDir, err)
+	case !info.IsDir():
+		return fmt.Errorf("inbox %s is not a directory", p.InboxDir)
+	}
+	return nil
 }
 
 func (p *Placer) confirm(from, to string) bool {
@@ -116,9 +145,6 @@ func (p *Placer) checkVacant(path string) error {
 }
 
 func (p *Placer) move(from, to string) error {
-	if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
-		return err
-	}
 	if err := p.checkVacant(to); err != nil {
 		return err
 	}

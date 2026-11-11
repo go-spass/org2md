@@ -30,7 +30,7 @@ below.
 
 ## 2. Require the inbox to exist
 
-- [ ] 2.1 Branch `feat/require-existing-inbox`. **BREAKING.** Red first in `internal/vault`:
+- [x] 2.1 Branch `feat/require-existing-inbox`. **BREAKING.** Red first in `internal/vault`:
   add `TestPlaceRefusesAMissingInbox` and `TestPlaceRefusesANonDirectoryInbox` expecting a
   non-nil error naming the configured path and no directory created;
   `TestPlaceLeavesNothingBehindWhenTheInboxIsMissing` asserting the beside-the-input Markdown
