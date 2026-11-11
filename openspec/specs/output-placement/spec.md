@@ -3,7 +3,8 @@
 ## Purpose
 
 Decides where the converted Markdown lands: beside the input, at an explicit path, on
-stdout, or moved into an Obsidian vault's Inbox. Derived from FR-2 in `docs/design.md`.
+stdout, or moved into the configured inbox directory of an Obsidian vault. Derived from FR-2
+in `docs/design.md`.
 
 ## Requirements
 

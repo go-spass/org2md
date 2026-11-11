@@ -41,13 +41,21 @@ org2md [flags] <file.org>
 
 Resolution order:
 
-1. `-o <path>` given → write exactly there. No prompt, no move.
-2. No `-o` → write `<input-basename>.md` beside the input file, then:
+1. `-o <path>` given → write exactly there. No prompt, no move. The inbox is not consulted.
+2. No `-o`, `MDNOTES_INBOX` set, `--no-move` absent → a move is in play, so the inbox is
+   checked first: `$MDNOTES_INBOX` must name an existing directory. A value that names
+   nothing, or names a file, fails the run before anything is written. org2md does not create
+   it — it files into a vault, it does not reshape one.
+3. Write `<input-basename>.md` beside the input file, then:
    - `MDNOTES_INBOX` set and `--no-move` absent → offer to move it to `$MDNOTES_INBOX/`
      (`-y` accepts without asking; a non-TTY stdin declines without asking). The variable
      names the destination directory itself: no subdirectory is appended to it.
    - otherwise → leave it beside the input.
-3. Moving into a path that already exists is refused unless `--force`.
+4. Moving into a path that already exists is refused unless `--force`.
+
+The variable is set with `$HOME` rather than `~`: a capture folder named `00 - Inbox` forces
+the value to be quoted, and a quoted `~` arrives literally. Such a value now produces an
+error naming the path rather than a directory beginning with `~`.
 
 The prompt is interactive, so it lives in `main`/`internal/vault` and never in the
 conversion path.
