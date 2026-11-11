@@ -43,7 +43,7 @@ below.
   write at `place.go:56`, only when `output == ""`, `InboxDir != ""`, and `!NoMove`. Refactor
   step, no behavior change: delete `os.MkdirAll` from `move` (`place.go:121`), which the
   validation makes unreachable. Verify with `make check` and `make test-race`.
-- [ ] 2.2 Branch `docs/require-existing-inbox`, immediately after 2.1 merges. Documentation for
+- [x] 2.2 Branch `docs/require-existing-inbox`, immediately after 2.1 merges. Documentation for
   the work 2.1 landed, so no test drives it and no behavior changes: say in `README.md` and in
   `docs/design.md` FR-2 that `$MDNOTES_INBOX` must name an existing directory and that org2md
   does not create it, recommending `$HOME` over `~` because the directory name contains

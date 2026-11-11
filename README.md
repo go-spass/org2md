@@ -32,7 +32,19 @@ org2md [flags] <file.org>
 With no `--output`, the Markdown is written beside the input file — `notes.org` becomes
 `notes.md`. If `MDNOTES_INBOX` is set, `org2md` then asks whether to move it into
 `$MDNOTES_INBOX`. The variable names the destination directory itself; nothing is appended to
-it, so a vault that calls its capture folder `00 - Inbox` is spelled out in full.
+it, so a vault that calls its capture folder `00 - Inbox` is spelled out in full:
+
+```sh
+export MDNOTES_INBOX="$HOME/Documents/second-brain/00 - Inbox"
+```
+
+Use `$HOME` rather than `~`. The directory name contains spaces, so the value has to be
+quoted, and a quoted `~` is passed through literally instead of expanding.
+
+The directory must already exist: `org2md` files into a vault, it does not reshape one. A
+value that names nothing, or names a file, is an error — and the check runs before anything
+is written, so a typo costs a rerun rather than leaving a stray `.md` beside the input and an
+invented directory in the vault.
 
 Run `org2md` with no arguments (or `org2md --help`) to print this usage, the flags below and
 worked examples.
