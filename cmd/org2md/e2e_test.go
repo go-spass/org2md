@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 	"os/exec"
@@ -143,5 +144,84 @@ func TestEndToEndFilesIntoTheInbox(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), inboxed) {
 		t.Errorf("stderr = %q, want the filed path reported under --verbose", stderr.String())
+	}
+
+	// Issue #13 in full: the vault root must hold the capture folder and
+	// nothing else. The bug was an invented "Inbox" sibling that the note went
+	// into instead, where no review would ever look for it.
+	vault := filepath.Join(dir, "second-brain")
+	if _, err := os.Stat(filepath.Join(vault, "Inbox")); !os.IsNotExist(err) {
+		t.Error("org2md invented an Inbox/ directory at the vault root")
+	}
+	entries, err := os.ReadDir(vault)
+	if err != nil {
+		t.Fatalf("ReadDir(%q) error = %v", vault, err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "00 - Inbox" {
+		names := make([]string, len(entries))
+		for i, e := range entries {
+			names[i] = e.Name()
+		}
+		t.Errorf("vault root holds %v, want just the configured inbox", names)
+	}
+}
+
+// TestEndToEndRefusesAMisspelledInbox is the other half of issue #13: a typo in
+// the variable used to be answered by creating the directory it named and
+// filing the note there, so the run succeeded and the note was gone. It must
+// now fail having written nothing at all.
+func TestEndToEndRefusesAMisspelledInbox(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds the binary")
+	}
+	bin := build(t)
+
+	source, err := os.ReadFile(realisticOrg)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", realisticOrg, err)
+	}
+
+	dir := t.TempDir()
+	input := filepath.Join(dir, "capture.org")
+	if err := os.WriteFile(input, source, 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	vault := filepath.Join(dir, "second-brain")
+	inbox := filepath.Join(vault, "00 - Inbox")
+	if err := os.MkdirAll(inbox, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	// One character out, which is all it takes.
+	typo := filepath.Join(vault, "00 - Inbx")
+
+	cmd := exec.Command(bin, "--yes", "--verbose", input)
+	cmd.Env = append(os.Environ(), "MDNOTES_INBOX="+typo)
+	var stderr strings.Builder
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
+	if err == nil {
+		t.Fatalf("org2md exited 0 with a misspelled inbox; stderr: %s", stderr.String())
+	}
+	var exit *exec.ExitError
+	if !errors.As(err, &exit) {
+		t.Fatalf("org2md error = %v, want a non-zero exit status", err)
+	}
+	if !strings.Contains(stderr.String(), typo) {
+		t.Errorf("stderr = %q, want it to name the configured path %q", stderr.String(), typo)
+	}
+
+	if _, err := os.Stat(typo); !os.IsNotExist(err) {
+		t.Errorf("org2md created %q; a typo must not invent a directory", typo)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "capture.md")); !os.IsNotExist(err) {
+		t.Error("org2md left Markdown beside the input; a fatal condition writes nothing")
+	}
+	entries, err := os.ReadDir(inbox)
+	if err != nil {
+		t.Fatalf("ReadDir(%q) error = %v", inbox, err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("the real inbox holds %d entries, want it untouched", len(entries))
 	}
 }
