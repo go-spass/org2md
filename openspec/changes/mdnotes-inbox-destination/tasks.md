@@ -8,7 +8,7 @@ below.
 
 ## 1. Point the move at $MDNOTES_INBOX
 
-- [ ] 1.1 Branch `feat/mdnotes-inbox-env`. **BREAKING.** Red first in `internal/vault`:
+- [x] 1.1 Branch `feat/mdnotes-inbox-env`. **BREAKING.** Red first in `internal/vault`:
   retarget `TestPlaceMovesIntoInbox` (`place_test.go:131`) to set an `InboxDir` field and
   expect the note at `<InboxDir>/note.md` with no `Inbox` segment, and add
   `TestPlaceMovesIntoAnInboxWithSpaces` covering a `00 - Inbox` destination. In `cmd/org2md`,
