@@ -246,9 +246,7 @@ Steps 1–8 need no CLI and no filesystem, so the bulk of the tool is testable f
    Obsidian callouts or the Tasks plugin's emoji format are richer but tie output to
    specific plugins. Current choice: plain tags.
 2. **`:LOGBOOK:` and clock entries** — dropped in v1; worth a `--keep-drawers` flag later?
-3. **Multiple input files / directory mode** — out of scope for v1, but it is the obvious
-   first subcommand and a reason Cobra was chosen.
-4. **Continuation text interleaved with a nested list** — `ListItem` keeps its own text in
+3. **Continuation text interleaved with a nested list** — `ListItem` keeps its own text in
    `Lines` and its nested lists in `Children`, so an item holding both renders all of its
    text before the nested list even when the source interleaved them. Fixing it means
    modelling item content as one ordered `[]Node`, which also changes whether such an item
@@ -257,3 +255,11 @@ Steps 1–8 need no CLI and no filesystem, so the bulk of the tool is testable f
 Resolved: scheduled/deadline dates render as plain text (no daily-note links — the vault
 does not use daily notes, so linking would only mint unresolved links), and `_underline_`
 renders as `<u>`.
+
+Resolved 2026-11-11: **no multiple-input or directory mode.** This was listed here as "the
+obvious first subcommand and a reason Cobra was chosen." It is not wanted. org2md is used
+surgically — a rough note captured in org-mode is converted when it is ready for a more
+formal place in the vault, one file at a time — so a batch mode would never be run. Issue #14
+closed on this, after a one-off pass over the live `Org/` agenda files confirmed all four
+convert clean, with every warning (`#+CATEGORY:`, `#+STARTUP:`, `#+TAGS:`, `:PROPERTIES:`)
+correctly dropped. Cobra stays for its flag handling and help, not for a future subcommand.

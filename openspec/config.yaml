@@ -2,65 +2,29 @@ schema: spec-driven
 
 context: |
   org2md is a Go CLI that converts an Emacs org-mode file into Markdown for an
-  Obsidian vault. Go 1.27, gofmt formatting, idiomatic error handling.
+  Obsidian vault.
 
-  Planning: OpenSpec is the planning system for all new work. `docs/design.md` is
-  the frozen v1 design record — its FR-1 … FR-7 numbering and org → Markdown
-  mapping tables remain the reference for existing behavior, and its "Open
-  questions" section is the backlog new changes are drawn from, but no new plan
-  steps are added to it. Update it only when a change settles one of those
-  questions or contradicts a documented decision.
+  Read these two files before writing any artifact. They are authoritative and this
+  block deliberately does not restate them, so that a convention has exactly one home:
 
-  Git: never commit to `main`. Every task in a change's `tasks.md` gets its own
-  branch and its own pull request, with a branch prefix matching the
-  conventional-commit type (`feat/`, `fix/`, `refactor/`, `test/`, `docs/`,
-  `chore/`). Never implement two tasks on one branch, and never reopen a merged
-  task's branch to carry the next one. `main` must build and pass its tests at
-  every merge, so a task is sized to be independently shippable. Do not commit
-  unless asked, and never pass `--no-verify`.
+  - `CLAUDE.md` — the project's conventions and constraints. Its "Design notes" section
+    holds the architectural constraints a change must not break (the purity boundary,
+    two-phase parsing, which package owns org syntax versus Obsidian conventions, the
+    `Render` signature and warning contract, output placement) and the testing
+    conventions. Its "Workflow" section holds the git and test-driven rules: one branch
+    and one pull request per task, never commit to `main`, the failing test first. Its
+    "Commands" section holds the `make` targets, which are the only build interface.
+    Its "Repository state" section holds the settled decisions, including that
+    versioning stays in the 1.x series and a breaking CLI change does not bump the major.
+  - `docs/design.md` — authoritative for behavior: the numbered functional requirements
+    FR-1 … FR-7 and the org → Markdown mapping tables, which remain the reference for
+    how the tool behaves today. Its "Open questions" section is the backlog new changes
+    are drawn from; its "Resolved" notes record questions already answered, so read them
+    before proposing one back. Never add plan steps to it. Update it only when a change
+    settles an open question or contradicts a documented decision.
 
-  Test-driven, without exception: the failing test is written first and watched
-  fail, then the minimum code to pass it, then refactor. No production code lands
-  without a test that drove it. A bug is reproduced as a failing test before the
-  fix is touched. Because each task is its own pull request, the whole
-  red-green-refactor cycle happens inside one task — the test and the code that
-  satisfies it land together, never split across two pull requests.
-
-  `make` is the interface for building and testing — use the Makefile targets
-  (`build`, `test`, `test-race`, `cover`, `vet`, `fmt`, `clean`, `install`)
-  rather than calling `go` directly. A single `go test -run TestName ./pkg` during
-  a red-green cycle is fine. If a target is missing, add it to the Makefile
-  instead of working around it. `make golden` rewrites the golden files in
-  `internal/md/testdata` and `cmd/org2md/testdata`; it builds the binary, and
-  `go test -short` skips the end-to-end tests that need one.
-
-  Architectural constraints a change must not break:
-  - Conversion is pure: `io.Reader` in, string out. `internal/org` and
-    `internal/md` touch neither the filesystem nor the environment. Anything
-    interactive or environment-dependent belongs in `internal/vault` or `main`.
-  - Parsing is line-oriented in two phases (blocks, then inlines). Inline markup
-    is never applied inside source/example/verbatim content — a bare `*` in a
-    shell snippet has to survive.
-  - `internal/org` owns org syntax; `internal/md` owns Obsidian conventions. A
-    construct with no Markdown equivalent is a rendering decision, not a parsing
-    one.
-  - Unrecognized org syntax passes through verbatim with a warning; it never
-    fails the run.
-  - `Render` returns `(string, []string)` — the Markdown and the warnings, in
-    document order. Anything org can say that Markdown cannot is reported rather
-    than dropped in silence, with `:LOGBOOK:` the one deliberate exception.
-  - Output placement: explicit `-o` wins; otherwise write beside the source and
-    offer the `$MDNOTES_INBOX` move. That variable names the destination
-    directory itself, must already exist, and is checked before anything is
-    written. The target vault does not use daily notes, so dates never render as
-    links.
-
-  Tests are table-driven snippets per construct plus `testdata/` golden files for
-  whole documents. `internal/vault` tests use `t.TempDir()` and take the inbox as
-  a `Placer` field rather than from the environment, with the prompt reading from
-  an injected `io.Reader`, so no test needs a TTY. `cmd/org2md`, which does read
-  the environment, unsets the inbox variables in `TestMain`: a developer's own
-  shell has one exported, and a test must never reach a real vault.
+  If either file contradicts this block, the file wins — report the contradiction so this
+  block gets fixed.
 
 rules:
   proposal:
