@@ -10,7 +10,7 @@ the generated Markdown into `$MDNOTES_INBOX`, which names the destination direct
 
 ## Repository state
 
-Released at v2.0.0. Every step of the v1 plan in `docs/design.md` is done, and one change
+Released at v1.2.0. Every step of the v1 plan in `docs/design.md` is done, and one change
 has shipped on top of it: `$MDNOTES_DIR/Inbox` became `$MDNOTES_INBOX`, which must name an
 existing directory. `cmd/org2md` parses an org file, renders it, and places the result;
 `internal/org` parses, `internal/md` renders, `internal/vault` decides where the output goes
@@ -18,9 +18,9 @@ and offers the `$MDNOTES_INBOX` move.
 
 Further work is planned in OpenSpec, not in `docs/design.md` — see **Planning** below. The
 open questions at the end of `docs/design.md` are the backlog those changes are drawn from.
-What has shipped since v1 is in `openspec/changes/archive/`, one directory per change, each
-holding the proposal and design that argued for it. Read the relevant one before reopening a
-decision it settled.
+What has shipped since the v1 plan is in `openspec/changes/archive/`, one directory per
+change, each holding the proposal and design that argued for it. Read the relevant one before
+reopening a decision it settled.
 
 Run `make golden` to rewrite the golden files in `internal/md/testdata` and
 `cmd/org2md/testdata` after an intended rendering change, and read the resulting diff before
@@ -31,7 +31,7 @@ build; `go test -short` skips the end-to-end tests that need one.
 the org → Markdown mapping tables, the package design, and the completed implementation plan.
 Read it before writing code — it is still the reference for how the tool behaves today, and
 it is kept that way rather than left frozen. FR-2 has been amended twice by the
-`$MDNOTES_INBOX` change, so it describes v2 behavior, not the v1 behavior originally written
+`$MDNOTES_INBOX` change, so it describes current behavior, not what was originally written
 there. Do not add plan steps to it; update it when a change settles one of its open questions
 or contradicts a documented decision, rather than letting the code drift from it.
 
@@ -42,9 +42,21 @@ Settled decisions:
   `internal/vault` (output placement and the `MDNOTES_INBOX` move)
 - `spf13/cobra` for the CLI
 - Conversion scope: core org syntax + YAML frontmatter + task metadata. Set in v1 and
-  unchanged since — v2.0.0 altered output placement only, and no org construct renders
+  unchanged since — v1.2.0 altered output placement only, and no org construct renders
   differently.
 - Output: explicit `-o` wins; otherwise write beside the source and offer the move
+- Versioning stays in the 1.x series, and a breaking CLI change does not bump the major.
+  org2md is a command, not a library: everything importable lives under `internal/`, which
+  Go forbids anyone outside this module from importing, so there is no public Go API for a
+  major version to describe. Go's major-version rule (Semantic Import Versioning) would
+  require the module path to become `github.com/go-spass/org2md/v2` and every internal import
+  to be rewritten — and until it is, the Go proxy rejects a v2 tag outright and
+  `go install ...@latest` silently resolves to the newest 1.x instead. Paying that to signal
+  a renamed environment variable is the wrong trade for a tool installed with `go install`.
+  A breaking CLI change is announced in the release notes and carries `feat!:` with a
+  `BREAKING CHANGE:` footer in the commit — Conventional Commits' `!` marks the break, it
+  does not oblige a major bump. Revisit only if org2md ever exports a package outside
+  `internal/`.
 
 The open items are listed at the end of `docs/design.md` — raise them rather than deciding
 them silently.

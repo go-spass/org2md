@@ -74,6 +74,16 @@ releases are source-only, so the only configuration that breaks is this machine'
 is one line in a shell profile. Going public did not close that window — the first user does.
 Semver puts this at v2.0.0.
 
+**Amended 2026-11-11, after the change shipped.** It went out as v1.2.0, not v2.0.0. The
+sentence above is still right about the break; it was wrong that the break belongs in the
+major number. A v2 tag on this module is unusable: Go requires the module path to end in
+`/v2` once the major version is 2 or higher, and without that the proxy rejects the tag and
+`go install ...@latest` quietly resolves to the newest 1.x instead — so a v2.0.0 release
+reaches nobody. org2md exports no package outside `internal/`, so there is no public Go API
+for a major version to describe, and the renamed environment variable is not worth rewriting
+the module path for. The break is announced in the release notes and in the `feat!:` commits
+instead. The original v2.0.0 tag and release were deleted. See CLAUDE.md's settled decisions.
+
 ## Out of scope
 
 - Reading, checking, or warning about `$MDNOTES_DIR` in any form. No migration shim, no
