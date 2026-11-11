@@ -5,14 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 `org2md` is a Go CLI that converts an Emacs org-mode file into a Markdown file suitable
-for an Obsidian vault. If `MDNOTES_DIR` is set in the environment, the tool offers to move
-the generated Markdown into `$MDNOTES_DIR/Inbox`.
+for an Obsidian vault. If `MDNOTES_INBOX` is set in the environment, the tool offers to move
+the generated Markdown into `$MDNOTES_INBOX`, which names the destination directory itself.
 
 ## Repository state
 
 v1 complete: every step of the plan in `docs/design.md` is done. `cmd/org2md` parses an org
 file, renders it, and places the result; `internal/org` parses, `internal/md` renders,
-`internal/vault` decides where the output goes and offers the `$MDNOTES_DIR/Inbox` move.
+`internal/vault` decides where the output goes and offers the `$MDNOTES_INBOX` move.
 
 Further work is planned in OpenSpec, not in `docs/design.md` — see **Planning** below. The
 open questions at the end of `docs/design.md` are the backlog those changes are drawn from.
@@ -33,7 +33,7 @@ Settled decisions:
 
 - Module path `github.com/go-spass/org2md`
 - `cmd/org2md/` for CLI wiring, `internal/org` (parser), `internal/md` (renderer),
-  `internal/vault` (output placement and the `MDNOTES_DIR` move)
+  `internal/vault` (output placement and the `MDNOTES_INBOX` move)
 - `spf13/cobra` for the CLI
 - v1 scope: core org syntax + YAML frontmatter + task metadata
 - Output: explicit `-o` wins; otherwise write beside the source and offer the move
