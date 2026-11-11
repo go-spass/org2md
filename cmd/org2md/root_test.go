@@ -9,6 +9,16 @@ import (
 	"testing"
 )
 
+// TestMain clears the inbox variables before any test runs. A developer's own
+// shell has MDNOTES_INBOX exported, and a test that converts without setting it
+// would inherit it and file fixtures into the real vault. Every test that wants
+// a destination sets one with t.Setenv.
+func TestMain(m *testing.M) {
+	os.Unsetenv("MDNOTES_INBOX")
+	os.Unsetenv("MDNOTES_DIR")
+	os.Exit(m.Run())
+}
+
 const sampleOrg = "#+TITLE: Sample\n#+OPTIONS: toc:nil\n\n* TODO A task\nBody *text*.\n"
 
 const sampleMarkdown = "---\ntitle: Sample\n---\n\n# A task #todo\n\nBody **text**.\n"
@@ -306,7 +316,7 @@ func TestWarningCountIsPluralised(t *testing.T) {
 	}
 }
 
-func TestMovesIntoTheNotesDirectory(t *testing.T) {
+func TestMovesIntoTheInbox(t *testing.T) {
 	tests := []struct {
 		name      string
 		stdin     string
@@ -322,15 +332,15 @@ func TestMovesIntoTheNotesDirectory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			input := orgFile(t)
-			notes := filepath.Join(filepath.Dir(input), "vault")
-			t.Setenv("MDNOTES_DIR", notes)
+			inbox := filepath.Join(filepath.Dir(input), "vault", "00 - Inbox")
+			t.Setenv("MDNOTES_INBOX", inbox)
 
 			args := append(tt.args, input)
 			if _, _, err := run(t, tt.stdin, args...); err != nil {
 				t.Fatalf("Execute() error = %v", err)
 			}
 
-			inboxed := filepath.Join(notes, "Inbox", "note.md")
+			inboxed := filepath.Join(inbox, "note.md")
 			beside := strings.TrimSuffix(input, ".org") + ".md"
 
 			if tt.wantMoved {
@@ -351,17 +361,53 @@ func TestMovesIntoTheNotesDirectory(t *testing.T) {
 	}
 }
 
-func TestNoNotesDirectoryMeansNoPrompt(t *testing.T) {
+func TestNoInboxMeansNoPrompt(t *testing.T) {
 	input := orgFile(t)
-	t.Setenv("MDNOTES_DIR", "")
+	t.Setenv("MDNOTES_INBOX", "")
 
 	_, stderr, err := run(t, "y\n", input)
 	if err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
 	if strings.Contains(stderr, "Move") {
-		t.Errorf("stderr = %q, want no prompt without a notes directory", stderr)
+		t.Errorf("stderr = %q, want no prompt without an inbox", stderr)
 	}
+}
+
+// TestOldNotesDirectoryIsIgnored pins the breaking half of this change: a shell
+// profile left over from v1 has MDNOTES_DIR set and nothing else, and org2md
+// has to treat that as no inbox at all rather than filing to the vault root.
+func TestOldNotesDirectoryIsIgnored(t *testing.T) {
+	input := orgFile(t)
+	notes := filepath.Join(filepath.Dir(input), "vault")
+	if err := os.MkdirAll(notes, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	t.Setenv("MDNOTES_DIR", notes)
+	t.Setenv("MDNOTES_INBOX", "")
+
+	_, stderr, err := run(t, "y\n", input)
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if strings.Contains(stderr, "Move") {
+		t.Errorf("stderr = %q, want no prompt from MDNOTES_DIR alone", stderr)
+	}
+	if strings.Contains(stderr, "MDNOTES_DIR") {
+		t.Errorf("stderr = %q, want no mention of MDNOTES_DIR", stderr)
+	}
+	// Nothing may appear under the old vault root, least of all an invented
+	// Inbox: that silent misfiling is the bug this change exists to kill.
+	entries, err := os.ReadDir(notes)
+	if err != nil {
+		t.Fatalf("ReadDir(%q) error = %v", notes, err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("%q holds %d entries, want it untouched", notes, len(entries))
+	}
+
+	readFile(t, strings.TrimSuffix(input, ".org")+".md")
 }
 
 // TestAnswerReaderDeclinesANonTerminal guards the reason term.IsTerminal is

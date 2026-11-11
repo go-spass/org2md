@@ -113,10 +113,15 @@ func TestEndToEndFilesIntoTheInbox(t *testing.T) {
 	if err := os.WriteFile(input, source, 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
-	notes := filepath.Join(dir, "second-brain")
+	// The vault's capture folder, named as the real one is: not "Inbox", and
+	// with spaces in it.
+	inbox := filepath.Join(dir, "second-brain", "00 - Inbox")
+	if err := os.MkdirAll(inbox, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
 
 	cmd := exec.Command(bin, "--yes", "--verbose", input)
-	cmd.Env = append(os.Environ(), "MDNOTES_DIR="+notes)
+	cmd.Env = append(os.Environ(), "MDNOTES_INBOX="+inbox)
 	var stderr strings.Builder
 	cmd.Stderr = &stderr
 
@@ -124,7 +129,7 @@ func TestEndToEndFilesIntoTheInbox(t *testing.T) {
 		t.Fatalf("org2md error = %v\nstderr: %s", err, stderr.String())
 	}
 
-	inboxed := filepath.Join(notes, "Inbox", "capture.md")
+	inboxed := filepath.Join(inbox, "capture.md")
 	got, err := os.ReadFile(inboxed)
 	if err != nil {
 		t.Fatalf("ReadFile(%q) error = %v; the note was not filed", inboxed, err)

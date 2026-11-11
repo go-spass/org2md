@@ -1,4 +1,4 @@
-// Package vault decides where converted Markdown goes and, when a notes
+// Package vault decides where converted Markdown goes and, when an inbox
 // directory is known, offers to file it there.
 package vault
 
@@ -11,15 +11,13 @@ import (
 	"strings"
 )
 
-// inbox is the subdirectory of the notes directory new notes land in.
-const inbox = "Inbox"
-
 // Placer writes converted Markdown to its destination. Everything it needs
 // from the environment is a field, so its behaviour is decided by the caller
 // rather than discovered here.
 type Placer struct {
-	// NotesDir is $MDNOTES_DIR, empty when unset.
-	NotesDir string
+	// InboxDir is $MDNOTES_INBOX, empty when unset. It names the destination
+	// directory itself: nothing is appended to it.
+	InboxDir string
 
 	Force  bool
 	Yes    bool
@@ -38,8 +36,8 @@ type Placer struct {
 // up at, or an empty path when it went to stdout.
 //
 // An explicit output path is final: no prompt and no move. With no output path
-// the Markdown is written beside the input, and is then offered to the notes
-// directory if there is one.
+// the Markdown is written beside the input, and is then offered to the inbox
+// if there is one.
 func (p *Placer) Place(input, output, content string) (string, error) {
 	if output == "-" {
 		_, err := io.WriteString(p.Stdout, content)
@@ -76,10 +74,10 @@ func MarkdownPath(input string) string {
 }
 
 func (p *Placer) inboxPath(written string) (string, bool) {
-	if p.NotesDir == "" || p.NoMove {
+	if p.InboxDir == "" || p.NoMove {
 		return "", false
 	}
-	return filepath.Join(p.NotesDir, inbox, filepath.Base(written)), true
+	return filepath.Join(p.InboxDir, filepath.Base(written)), true
 }
 
 func (p *Placer) confirm(from, to string) bool {
@@ -128,8 +126,8 @@ func (p *Placer) move(from, to string) error {
 	if err := os.Rename(from, to); err == nil {
 		return nil
 	}
-	// Rename cannot cross filesystems, and a notes directory may well be on
-	// another volume, so fall back to copying.
+	// Rename cannot cross filesystems, and a vault may well be on another
+	// volume, so fall back to copying.
 	if err := copyFile(from, to); err != nil {
 		return err
 	}

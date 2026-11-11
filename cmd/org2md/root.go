@@ -15,8 +15,9 @@ import (
 	"github.com/go-spass/org2md/internal/vault"
 )
 
-// notesDirEnv names the vault org2md offers to file converted notes into.
-const notesDirEnv = "MDNOTES_DIR"
+// inboxEnv names the directory org2md offers to file converted notes into. It
+// is the destination itself, not a vault root to derive one from.
+const inboxEnv = "MDNOTES_INBOX"
 
 // The build information main reports when the linker stamped none: only the
 // Makefile passes -ldflags, so a `go install` or a plain `go build` starts here.
@@ -84,11 +85,11 @@ func newRootCmd(b buildInfo) *cobra.Command {
 		Long: fmt.Sprintf(`Convert an Emacs org-mode file to a Markdown file suited to an Obsidian vault.
 
 With no --output, the Markdown is written beside the input file. When %s is
-set, org2md then offers to move the result into $%s/Inbox.`, notesDirEnv, notesDirEnv),
+set, org2md then offers to move the result into $%s.`, inboxEnv, inboxEnv),
 		Example: `  # Convert a note, writing capture.md beside it.
   org2md capture.org
 
-  # Convert and file it in $` + notesDirEnv + `/Inbox without being asked.
+  # Convert and file it in $` + inboxEnv + ` without being asked.
   org2md --yes capture.org
 
   # Print the Markdown instead of writing a file.
@@ -116,7 +117,7 @@ set, org2md then offers to move the result into $%s/Inbox.`, notesDirEnv, notesD
 	f.StringVarP(&o.output, "output", "o", "", `write here instead of beside the input; "-" writes to stdout`)
 	f.BoolVar(&o.force, "force", false, "overwrite an existing file")
 	f.BoolVarP(&o.yes, "yes", "y", false, "answer yes to the move prompt")
-	f.BoolVar(&o.noMove, "no-move", false, "never move into $"+notesDirEnv+"/Inbox")
+	f.BoolVar(&o.noMove, "no-move", false, "never move into $"+inboxEnv)
 	f.BoolVarP(&o.verbose, "verbose", "v", false, "report conversion warnings and the path written")
 
 	cmd.Version = b.version
@@ -159,7 +160,7 @@ func convert(cmd *cobra.Command, input string, o *options) error {
 
 	// The prompt goes to stderr so that "-o -" stays pipeable.
 	placer := &vault.Placer{
-		NotesDir: os.Getenv(notesDirEnv),
+		InboxDir: os.Getenv(inboxEnv),
 		Force:    o.force,
 		Yes:      o.yes,
 		NoMove:   o.noMove,

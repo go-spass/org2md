@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-// fixture lays out a temporary input file and a notes directory.
+// fixture lays out a temporary input file and an inbox directory.
 type fixture struct {
 	dir      string
 	input    string
-	notesDir string
+	inboxDir string
 }
 
 func newFixture(t *testing.T) fixture {
@@ -21,7 +21,10 @@ func newFixture(t *testing.T) fixture {
 	if err := os.WriteFile(input, []byte("* Heading\n"), 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
-	return fixture{dir: dir, input: input, notesDir: filepath.Join(dir, "vault")}
+	// The inbox name ends in "Inbox" on purpose: if Placer ever appends a
+	// subdirectory again, the target becomes .../Inbox/Inbox/note.md and the
+	// move assertions below catch it.
+	return fixture{dir: dir, input: input, inboxDir: filepath.Join(dir, "vault", "Inbox")}
 }
 
 func readFile(t *testing.T, path string) string {
@@ -71,7 +74,7 @@ func TestPlaceStdout(t *testing.T) {
 func TestPlaceExplicitOutput(t *testing.T) {
 	f := newFixture(t)
 	want := filepath.Join(f.dir, "elsewhere.md")
-	p := &Placer{NotesDir: f.notesDir}
+	p := &Placer{InboxDir: f.inboxDir}
 
 	path, err := p.Place(f.input, want, "# Heading\n")
 	if err != nil {
@@ -83,9 +86,9 @@ func TestPlaceExplicitOutput(t *testing.T) {
 	if got := readFile(t, want); got != "# Heading\n" {
 		t.Errorf("file = %q, want %q", got, "# Heading\n")
 	}
-	// An explicit destination is final: no prompt and no move, even with a
-	// notes directory set.
-	if _, err := os.Stat(filepath.Join(f.notesDir, "Inbox", "elsewhere.md")); !os.IsNotExist(err) {
+	// An explicit destination is final: no prompt and no move, even with an
+	// inbox set.
+	if _, err := os.Stat(filepath.Join(f.inboxDir, "elsewhere.md")); !os.IsNotExist(err) {
 		t.Error("Place() moved a file given an explicit output path")
 	}
 }
@@ -150,7 +153,7 @@ func TestPlaceMovesIntoInbox(t *testing.T) {
 			var prompt strings.Builder
 
 			p := tt.placer
-			p.NotesDir = f.notesDir
+			p.InboxDir = f.inboxDir
 			p.Prompt = &prompt
 			if tt.answers != "" {
 				p.Answers = strings.NewReader(tt.answers)
@@ -161,7 +164,7 @@ func TestPlaceMovesIntoInbox(t *testing.T) {
 				t.Fatalf("Place() error = %v", err)
 			}
 
-			inbox := filepath.Join(f.notesDir, "Inbox", "note.md")
+			inbox := filepath.Join(f.inboxDir, "note.md")
 			beside := MarkdownPath(f.input)
 
 			if tt.wantMoved {
@@ -189,10 +192,35 @@ func TestPlaceMovesIntoInbox(t *testing.T) {
 	}
 }
 
+// TestPlaceMovesIntoAnInboxWithSpaces covers the destination this tool is
+// actually pointed at: a PARA vault's "00 - Inbox", whose name has spaces and
+// is not called "Inbox" at all.
+func TestPlaceMovesIntoAnInboxWithSpaces(t *testing.T) {
+	f := newFixture(t)
+	inboxDir := filepath.Join(f.dir, "second-brain", "00 - Inbox")
+	p := &Placer{InboxDir: inboxDir, Yes: true}
+
+	path, err := p.Place(f.input, "", "# Heading\n")
+	if err != nil {
+		t.Fatalf("Place() error = %v", err)
+	}
+
+	want := filepath.Join(inboxDir, "note.md")
+	if path != want {
+		t.Errorf("Place() path = %q, want %q", path, want)
+	}
+	if got := readFile(t, want); got != "# Heading\n" {
+		t.Errorf("file = %q, want %q", got, "# Heading\n")
+	}
+	if _, err := os.Stat(MarkdownPath(f.input)); !os.IsNotExist(err) {
+		t.Error("Place() left the file beside the input after moving it")
+	}
+}
+
 func TestPlaceCannotAskWithoutAnswers(t *testing.T) {
 	f := newFixture(t)
 	var prompt strings.Builder
-	p := &Placer{NotesDir: f.notesDir, Prompt: &prompt}
+	p := &Placer{InboxDir: f.inboxDir, Prompt: &prompt}
 
 	path, err := p.Place(f.input, "", "# Heading\n")
 	if err != nil {
@@ -208,7 +236,7 @@ func TestPlaceCannotAskWithoutAnswers(t *testing.T) {
 
 func TestPlaceRefusesToOverwriteInInbox(t *testing.T) {
 	f := newFixture(t)
-	inbox := filepath.Join(f.notesDir, "Inbox")
+	inbox := f.inboxDir
 	if err := os.MkdirAll(inbox, 0o755); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}
@@ -217,7 +245,7 @@ func TestPlaceRefusesToOverwriteInInbox(t *testing.T) {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 
-	p := &Placer{NotesDir: f.notesDir, Yes: true}
+	p := &Placer{InboxDir: f.inboxDir, Yes: true}
 	path, err := p.Place(f.input, "", "new\n")
 	if err == nil {
 		t.Fatal("Place() error = nil, want an already-exists error")
@@ -289,14 +317,14 @@ func TestCopyFileReportsAMissingSource(t *testing.T) {
 
 func TestMoveReportsAnUncreatableInbox(t *testing.T) {
 	f := newFixture(t)
-	// A regular file where the notes directory should be: Inbox cannot be
-	// created under it.
+	// A regular file where the inbox should be: nothing can be created under
+	// it.
 	blocked := filepath.Join(f.dir, "blocked")
 	if err := os.WriteFile(blocked, []byte("not a directory\n"), 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 
-	p := &Placer{NotesDir: blocked, Yes: true}
+	p := &Placer{InboxDir: blocked, Yes: true}
 	path, err := p.Place(f.input, "", "# Heading\n")
 	if err == nil {
 		t.Fatal("Place() error = nil, want a directory error")
